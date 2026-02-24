@@ -20,6 +20,58 @@ use crate::{
     state::{AccountState, AccountStateMap},
 };
 
+fn commands_en() -> Vec<BotCommand> {
+    vec![
+        BotCommand::new("new", "Start a new session"),
+        BotCommand::new("sessions", "List and switch sessions"),
+        BotCommand::new("model", "Switch provider/model"),
+        BotCommand::new("sandbox", "Toggle sandbox and choose image"),
+        BotCommand::new("sh", "Enable shell command mode"),
+        BotCommand::new("clear", "Clear session history"),
+        BotCommand::new("compact", "Compact session (summarize)"),
+        BotCommand::new("context", "Show session context info"),
+        BotCommand::new("help", "Show available commands"),
+    ]
+}
+
+fn commands_zh_cn() -> Vec<BotCommand> {
+    vec![
+        BotCommand::new("new", "开始新会话"),
+        BotCommand::new("sessions", "查看并切换会话"),
+        BotCommand::new("model", "切换提供商/模型"),
+        BotCommand::new("sandbox", "切换沙箱并选择镜像"),
+        BotCommand::new("sh", "启用 Shell 命令模式"),
+        BotCommand::new("clear", "清空会话历史"),
+        BotCommand::new("compact", "压缩会话（生成摘要）"),
+        BotCommand::new("context", "显示会话上下文信息"),
+        BotCommand::new("help", "显示可用命令"),
+    ]
+}
+
+async fn register_localized_commands(bot: &Bot, account_id: &str) {
+    // Default command list used by Telegram clients when no language-specific
+    // command set matches.
+    if let Err(e) = bot.set_my_commands(commands_en()).await {
+        warn!(account_id, "failed to register default bot commands: {e}");
+    }
+
+    // Register Chinese commands for common language tags so Telegram clients
+    // can auto-select by user app language.
+    for language_code in ["zh", "zh-CN", "zh-Hans"] {
+        if let Err(e) = bot
+            .set_my_commands(commands_zh_cn())
+            .language_code(language_code)
+            .await
+        {
+            warn!(
+                account_id,
+                language_code,
+                "failed to register localized bot commands: {e}"
+            );
+        }
+    }
+}
+
 /// Start polling for a single bot account.
 ///
 /// Spawns a background task that processes updates until the returned
@@ -46,20 +98,7 @@ pub async fn start_polling(
     bot.delete_webhook().send().await?;
 
     // Register slash commands for autocomplete in Telegram clients.
-    let commands = vec![
-        BotCommand::new("new", "Start a new session"),
-        BotCommand::new("sessions", "List and switch sessions"),
-        BotCommand::new("model", "Switch provider/model"),
-        BotCommand::new("sandbox", "Toggle sandbox and choose image"),
-        BotCommand::new("sh", "Enable shell command mode"),
-        BotCommand::new("clear", "Clear session history"),
-        BotCommand::new("compact", "Compact session (summarize)"),
-        BotCommand::new("context", "Show session context info"),
-        BotCommand::new("help", "Show available commands"),
-    ];
-    if let Err(e) = bot.set_my_commands(commands).await {
-        warn!(account_id, "failed to register bot commands: {e}");
-    }
+    register_localized_commands(&bot, &account_id).await;
 
     info!(
         account_id,
