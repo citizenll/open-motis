@@ -1,6 +1,7 @@
 // ── Chat UI ─────────────────────────────────────────────────
 
 import { formatTokens, parseErrorMessage, sendRpc, updateCountdown } from "./helpers.js";
+import { getLocale } from "./i18n.js";
 import * as S from "./state.js";
 
 // Scroll chat to bottom and keep it pinned until layout settles.
@@ -310,12 +311,13 @@ export function updateCommandInputUI() {
 		prompt.classList.toggle("chat-command-prompt-hidden", !S.commandModeEnabled);
 		prompt.setAttribute("aria-hidden", S.commandModeEnabled ? "false" : "true");
 	}
+	var isZh = getLocale() === "zh-CN";
 	if (S.commandModeEnabled) {
-		S.chatInput.placeholder = "Run shell command\u2026";
-		S.chatInput.setAttribute("aria-label", "Command input");
+		S.chatInput.placeholder = isZh ? "执行 Shell 命令…" : "Run shell command…";
+		S.chatInput.setAttribute("aria-label", isZh ? "命令输入" : "Command input");
 	} else {
-		S.chatInput.placeholder = "Type a message...";
-		S.chatInput.setAttribute("aria-label", "Chat input");
+		S.chatInput.placeholder = isZh ? "输入消息..." : "Type a message...";
+		S.chatInput.setAttribute("aria-label", isZh ? "聊天输入" : "Chat input");
 	}
 	updateTokenBar();
 }
@@ -323,27 +325,24 @@ export function updateCommandInputUI() {
 export function updateTokenBar() {
 	var bar = S.$("tokenBar");
 	if (!bar) return;
+	var isZh = getLocale() === "zh-CN";
 	var total = S.sessionTokens.input + S.sessionTokens.output;
-	var text =
-		formatTokens(S.sessionTokens.input) +
-		" in / " +
-		formatTokens(S.sessionTokens.output) +
-		" out \u00b7 " +
-		formatTokens(total) +
-		" tokens";
+	var text = isZh
+		? `${formatTokens(S.sessionTokens.input)} 输入 / ${formatTokens(S.sessionTokens.output)} 输出 \u00b7 ${formatTokens(total)} tokens`
+		: `${formatTokens(S.sessionTokens.input)} in / ${formatTokens(S.sessionTokens.output)} out \u00b7 ${formatTokens(total)} tokens`;
 	if (S.sessionContextWindow > 0) {
 		var currentInput = S.sessionCurrentInputTokens || 0;
 		var pct = Math.max(0, 100 - Math.round((currentInput / S.sessionContextWindow) * 100));
-		text += ` \u00b7 Context left before auto-compact: ${pct}%`;
+		text += isZh ? ` \u00b7 自动压缩前剩余上下文: ${pct}%` : ` \u00b7 Context left before auto-compact: ${pct}%`;
 	}
 	if (!S.sessionToolsEnabled) {
-		text += " \u00b7 Tools: disabled";
+		text += isZh ? " \u00b7 工具: 已禁用" : " \u00b7 Tools: disabled";
 	}
-	var execModeLabel = S.sessionExecMode === "sandbox" ? "sandboxed" : "host";
+	var execModeLabel = S.sessionExecMode === "sandbox" ? (isZh ? "沙箱" : "sandboxed") : isZh ? "主机" : "host";
 	var promptSymbol = S.sessionExecPromptSymbol || "$";
-	text += ` \u00b7 Execute: ${execModeLabel} (${promptSymbol})`;
+	text += isZh ? ` \u00b7 执行: ${execModeLabel} (${promptSymbol})` : ` \u00b7 Execute: ${execModeLabel} (${promptSymbol})`;
 	if (S.commandModeEnabled) {
-		text += " \u00b7 /sh mode";
+		text += isZh ? " \u00b7 /sh 模式" : " \u00b7 /sh mode";
 	}
 	bar.textContent = text;
 }

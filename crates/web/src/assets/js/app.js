@@ -7,6 +7,7 @@ import { applyIdentityFavicon, formatPageTitle } from "./branding.js";
 import { SessionList } from "./components/session-list.js";
 import { onEvent } from "./events.js";
 import * as gon from "./gon.js";
+import { initI18n } from "./i18n.js";
 import { initMobile, toggleSessions } from "./mobile.js";
 import { updateNavCounts } from "./nav-counts.js";
 import { renderSessionProjectSelect } from "./project-combo.js";
@@ -55,6 +56,7 @@ registerPage("/", () => {
 });
 
 initTheme();
+initI18n();
 injectMarkdownStyles();
 initPWA();
 initMobile();

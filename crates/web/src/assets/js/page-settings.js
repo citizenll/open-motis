@@ -9,6 +9,7 @@ import { onEvent } from "./events.js";
 import * as gon from "./gon.js";
 import { refresh as refreshGon } from "./gon.js";
 import { sendRpc } from "./helpers.js";
+import { getLocale, getLocaleOptions, onLocaleChange, setLocale, t as i18nT } from "./i18n.js";
 import { updateIdentity, validateIdentityFields } from "./identity-utils.js";
 // Moved page init/teardown imports
 import { initChannels, teardownChannels } from "./page-channels.js";
@@ -265,12 +266,14 @@ var DEFAULT_SOUL =
 function IdentitySection() {
 	var id = identity.value;
 	var isNew = !(id && (id.name || id.user_name));
+	var localeOptions = getLocaleOptions();
 
 	var [name, setName] = useState(id?.name || "");
 	var [emoji, setEmoji] = useState(id?.emoji || "");
 	var [theme, setTheme] = useState(id?.theme || "");
 	var [userName, setUserName] = useState(id?.user_name || "");
 	var [soul, setSoul] = useState(id?.soul || "");
+	var [uiLanguage, setUiLanguage] = useState(getLocale());
 	var [saving, setSaving] = useState(false);
 	var [emojiSaving, setEmojiSaving] = useState(false);
 	var [nameSaving, setNameSaving] = useState(false);
@@ -288,6 +291,13 @@ function IdentitySection() {
 		setUserName(id.user_name || "");
 		setSoul(id.soul || "");
 	}, [id]);
+
+	useEffect(() => {
+		return onLocaleChange((locale) => {
+			setUiLanguage(locale);
+			rerender();
+		});
+	}, []);
 
 	function flashSaved() {
 		setSaved(true);
@@ -417,6 +427,13 @@ function IdentitySection() {
 		window.location.reload();
 	}
 
+	function onUiLanguageChange(nextLocale) {
+		var normalized = nextLocale || "en";
+		setUiLanguage(normalized);
+		setLocale(normalized);
+		rerender();
+	}
+
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
 		<h2 class="text-lg font-medium text-[var(--text-strong)]">Identity</h2>
 		${
@@ -447,6 +464,20 @@ function IdentitySection() {
 						<input type="text" class="provider-key-input" style="width:100%;"
 							value=${theme} onInput=${(e) => setTheme(e.target.value)}
 							placeholder="e.g. wise owl, chill fox" />
+					</div>
+					<div style="grid-column:1/-1;">
+						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${i18nT("settings.language.label")}</div>
+						<select
+							class="provider-key-input"
+							style="width:100%;"
+							value=${uiLanguage}
+							onChange=${(e) => onUiLanguageChange(e.target.value)}
+						>
+							${localeOptions.map((option) => html`<option key=${option.value} value=${option.value}>${option.label}</option>`)}
+						</select>
+						<div class="text-xs text-[var(--muted)]" style="margin-top:6px;">
+							${i18nT("settings.language.help")}
+						</div>
 					</div>
 					</div>
 					${

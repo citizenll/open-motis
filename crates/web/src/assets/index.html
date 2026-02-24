@@ -17,6 +17,7 @@
 <meta name="apple-mobile-web-app-title" content="moltis">
 <link rel="apple-touch-icon" href="{{ asset_prefix }}icons/apple-touch-icon.png">
 <script nonce="{{ nonce }}">!function(){var t=localStorage.getItem("moltis-theme")||"system";if(t==="system")t=matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light";document.documentElement.setAttribute("data-theme",t);document.documentElement.style.background=t==="dark"?"#0f1115":"#fafafa";document.documentElement.style.color=t==="dark"?"#e0e0e0":"#222"}()</script>
+<script nonce="{{ nonce }}">!function(){var k="moltis-ui-locale";var v=localStorage.getItem(k);if(!v){var n=(navigator.language||"").toLowerCase();v=n.startsWith("zh")?"zh-CN":"en"}document.documentElement.lang=v}()</script>
 <title>{{ share_site_name }}</title>
 <meta name="description" content="{{ share_description }}">
 <meta property="og:title" content="{{ share_title }}">
