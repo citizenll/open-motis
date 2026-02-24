@@ -579,7 +579,8 @@ pub async fn handle_message_direct(
                 }
 
                 let response = if cmd == "help" {
-                    "Available commands:\n/new — Start a new session\n/sessions — List and switch sessions\n/model — Switch provider/model\n/sandbox — Toggle sandbox and choose image\n/sh — Enable command mode (/sh off to exit)\n/clear — Clear session history\n/compact — Compact session (summarize)\n/context — Show session context info\n/help — Show this help".to_string()
+                    let user_language_code = msg.from.as_ref().and_then(|u| u.language_code.as_deref());
+                    localized_help_text(user_language_code).to_string()
                 } else {
                     match sink.dispatch_command(cmd_text, reply_target.clone()).await {
                         Ok(msg) => msg,
@@ -642,6 +643,20 @@ fn should_intercept_slash_command(cmd: &str, cmd_text: &str) -> bool {
             args.is_empty() || matches!(args, "on" | "off" | "exit" | "status")
         },
         _ => false,
+    }
+}
+
+fn is_chinese_language(language_code: Option<&str>) -> bool {
+    language_code
+        .map(|lang| lang.to_ascii_lowercase().starts_with("zh"))
+        .unwrap_or(false)
+}
+
+fn localized_help_text(language_code: Option<&str>) -> &'static str {
+    if is_chinese_language(language_code) {
+        "可用命令：\n/new — 开始新会话\n/sessions — 查看并切换会话\n/model — 切换提供商/模型\n/sandbox — 切换沙箱并选择镜像\n/sh — 启用命令模式（/sh off 退出）\n/clear — 清空会话历史\n/compact — 压缩会话（生成摘要）\n/context — 显示会话上下文信息\n/help — 显示本帮助"
+    } else {
+        "Available commands:\n/new — Start a new session\n/sessions — List and switch sessions\n/model — Switch provider/model\n/sandbox — Toggle sandbox and choose image\n/sh — Enable command mode (/sh off to exit)\n/clear — Clear session history\n/compact — Compact session (summarize)\n/context — Show session context info\n/help — Show this help"
     }
 }
 
