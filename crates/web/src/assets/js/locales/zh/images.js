@@ -19,10 +19,55 @@ export default {
 	defaultImage: {
 		title: "默认镜像",
 		description: "用于新会话和项目的基础镜像，除非被覆盖。留空使用内置默认值 (ubuntu:25.10)。",
+		save: "保存",
+		saving: "保存中…",
 	},
 
 	// ── Image row ──────────────────────────────────────────
 	deleteImage: "删除镜像",
+	kindSandbox: "沙盒",
+	kindTool: "工具",
+
+	// ── Containers ─────────────────────────────────────────
+	containers: {
+		title: "运行中的容器",
+		titleWithCount: "运行中的容器（{{count}}）",
+		restart: "重启",
+		restarting: "重启中…",
+		restartDaemon: "重启容器守护进程",
+		refresh: "刷新",
+		loading: "加载中…",
+		cleanAll: "清理全部",
+		stopAndRemoveAll: "停止并移除所有容器",
+		cleaning: "清理中…",
+		stop: "停止",
+		stopContainer: "停止容器",
+		delete: "删除",
+		deleteContainer: "删除容器",
+		noContainersFound: "未找到容器。",
+		failedDelete: "删除 {{name}} 失败：{{message}}",
+		failedClean: "清理容器失败：{{message}}",
+		failedRestart: "重启守护进程失败：{{message}}",
+	},
+
+	// ── Shared home ────────────────────────────────────────
+	sharedHome: {
+		title: "共享主目录",
+		description: "控制在启用共享主目录模式时 /home/sandbox 的持久化位置。",
+		descriptionPrefix: "控制",
+		descriptionSuffix: "在启用共享主目录模式时的持久化位置。",
+		statusLabel: "状态：",
+		enabled: "已启用",
+		disabledWithMode: "已禁用（{{mode}}）",
+		enableToggle: "启用共享主目录",
+		locationLabel: "共享目录位置",
+		pathPlaceholder: "data_dir()/sandbox/home/shared",
+		configuredPath: "已配置路径：{{path}}",
+		configuredPathDefault: "已配置路径：默认",
+		failedLoad: "加载共享目录设置失败。",
+		failedSave: "保存共享目录设置失败。",
+		savedRestart: "已保存。重启 Moltis 后生效共享目录变更。",
+	},
 
 	// ── Build section ──────────────────────────────────────
 	build: {
@@ -37,6 +82,7 @@ export default {
 		noPackages: "请指定至少一个软件包。",
 		builtTag: "已构建：{{tag}}",
 		errorPrefix: "错误：{{message}}",
+		failedToBuildImage: "构建镜像失败。",
 		allPresent: "所有请求的软件包已存在于 {{base}} 中：{{packages}}。无需构建镜像。",
 		alreadyInBase: "已在 {{base}} 中：{{present}}。仅安装：{{missing}}。",
 	},

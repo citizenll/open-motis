@@ -9,6 +9,7 @@ import { useEffect, useState } from "preact/hooks";
 import { EmojiPicker } from "./emoji-picker.js";
 import { refresh as refreshGon } from "./gon.js";
 import { parseAgentsListPayload, sendRpc } from "./helpers.js";
+import { t, translateDynamicLiterals } from "./i18n.js";
 import { navigate } from "./router.js";
 import { settingsPath } from "./routes.js";
 import { fetchSessions } from "./sessions.js";
@@ -16,20 +17,27 @@ import { confirmDialog } from "./ui.js";
 
 var WS_RETRY_LIMIT = 75;
 var WS_RETRY_DELAY_MS = 200;
+var AGENTS_TRANSLATION_NAMESPACES = ["agents", "common", "settings"];
 
 var _mounted = false;
-var containerRef = null;
+var _agentsContainer = null;
+
+function applyAgentsTranslations() {
+	if (!_agentsContainer) return;
+	translateDynamicLiterals(_agentsContainer, AGENTS_TRANSLATION_NAMESPACES);
+}
 
 export function initAgents(container, subPath) {
 	_mounted = true;
-	containerRef = container;
+	_agentsContainer = container;
 	render(html`<${AgentsPage} subPath=${subPath} />`, container);
+	applyAgentsTranslations();
 }
 
 export function teardownAgents() {
 	_mounted = false;
-	if (containerRef) render(null, containerRef);
-	containerRef = null;
+	if (_agentsContainer) render(null, _agentsContainer);
+	_agentsContainer = null;
 }
 
 // ── Create / Edit form ──────────────────────────────────────
@@ -112,7 +120,7 @@ function AgentForm({ agent, onSave, onCancel }) {
 				var tomlResult = presetToml.trim() ? results[results.length - 1] : null;
 				if (tomlResult && !tomlResult?.ok) {
 					setSaving(false);
-					setError(tomlResult?.error?.message || "Failed to save preset TOML");
+					setError(tomlResult?.error?.message || t("agents:form.failedToSavePreset"));
 					return;
 				}
 				setSaving(false);
@@ -129,11 +137,11 @@ function AgentForm({ agent, onSave, onCancel }) {
 	function onSubmit(e) {
 		e.preventDefault();
 		if (!name.trim()) {
-			setError("Name is required.");
+			setError(t("agents:form.nameRequired"));
 			return;
 		}
 		if (!(isEdit || id.trim())) {
-			setError("ID is required.");
+			setError(t("agents:form.idRequired"));
 			return;
 		}
 		setError(null);
@@ -143,7 +151,7 @@ function AgentForm({ agent, onSave, onCancel }) {
 		sendRpc(method, buildParams()).then((res) => {
 			if (!res?.ok) {
 				setSaving(false);
-				setError(res?.error?.message || "Failed to save");
+				setError(res?.error?.message || t("agents:form.failedToSave"));
 				return;
 			}
 			finishSave(isEdit ? agent.id : id.trim());
@@ -378,7 +386,7 @@ function AgentsPage({ subPath }) {
 					setDefaultId(parsed.defaultId);
 					setAgents(parsed.agents);
 				} else {
-					setError(res?.error?.message || "Failed to load agents");
+					setError(res?.error?.message || t("agents:errors.failedToLoadAgents"));
 				}
 			});
 		}
@@ -403,9 +411,7 @@ function AgentsPage({ subPath }) {
 	}, []);
 
 	function onDelete(agent) {
-		confirmDialog(
-			`Delete agent "${agent.name}"? Sessions using this agent will be reassigned to the default agent.`,
-		).then((yes) => {
+		confirmDialog(t("agents:card.deleteConfirm", { name: agent.name })).then((yes) => {
 			if (!yes) return;
 			sendRpc("agents.delete", { id: agent.id }).then((res) => {
 				if (res?.ok) {
@@ -414,7 +420,7 @@ function AgentsPage({ subPath }) {
 					fetchAgents();
 					fetchConfigPresets();
 				} else {
-					setError(res?.error?.message || "Failed to delete");
+					setError(res?.error?.message || t("agents:errors.failedToDelete"));
 				}
 			});
 		});
@@ -426,10 +432,14 @@ function AgentsPage({ subPath }) {
 				refreshGon();
 				fetchAgents();
 			} else {
-				setError(res?.error?.message || "Failed to set default");
+				setError(res?.error?.message || t("agents:errors.failedToSetDefault"));
 			}
 		});
 	}
+
+	useEffect(() => {
+		applyAgentsTranslations();
+	});
 
 	if (loading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
@@ -459,8 +469,9 @@ function AgentsPage({ subPath }) {
 			</button>
 		</div>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-			Create agent personas with different identities and personalities.
-			Each agent has its own memory and system prompt.
+			${t("agents:introLine1")}
+			${" "}
+			${t("agents:introLine2")}
 		</p>
 
 		${error && html`<span class="text-xs" style="color:var(--error);">${error}</span>`}

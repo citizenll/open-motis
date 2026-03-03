@@ -6,6 +6,7 @@ import { render } from "preact";
 import { useEffect } from "preact/hooks";
 import { onEvent } from "./events.js";
 import { sendRpc } from "./helpers.js";
+import { t, translateDynamicLiterals } from "./i18n.js";
 import { updateNavCount } from "./nav-counts.js";
 import { ConfirmDialog, requestConfirm } from "./ui.js";
 
@@ -14,6 +15,12 @@ var servers = signal([]);
 var loading = signal(false);
 var toasts = signal([]);
 var toastId = 0;
+var MCP_TRANSLATION_NAMESPACES = ["mcp", "common", "settings"];
+
+function applyMcpTranslations() {
+	if (!_mcpContainer) return;
+	translateDynamicLiterals(_mcpContainer, MCP_TRANSLATION_NAMESPACES);
+}
 
 // ── Helpers ─────────────────────────────────────────────────
 function showToast(message, type) {
@@ -803,6 +810,9 @@ function McpPage() {
 		});
 		return off;
 	}, []);
+	useEffect(() => {
+		applyMcpTranslations();
+	});
 
 	return html`
     <div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
@@ -812,31 +822,29 @@ function McpPage() {
       </div>
       <div class="max-w-[600px] bg-[var(--surface2)] border border-[var(--border)] rounded-[var(--radius)] px-5 py-4 leading-relaxed">
         <p class="text-sm text-[var(--text)] mb-2.5">
-          <strong class="text-[var(--text-strong)]">MCP (Model Context Protocol)</strong> tools extend the AI agent with external capabilities — file access, web fetch, database queries, code search, and more.
+          <strong class="text-[var(--text-strong)]">${t("mcp:introTitle")}</strong> ${t("mcp:introDescription")}
         </p>
 	        <div class="flex items-center gap-2 my-3 px-3.5 py-2.5 bg-[var(--surface)] rounded-[var(--radius-sm)] font-mono text-xs text-[var(--text-strong)]">
-	          <span class="opacity-50">Agent</span>
+	          <span class="opacity-50">${t("mcp:flowAgent")}</span>
 	          <span class="text-[var(--accent)]">\u2192</span>
-	          <span>Moltis</span>
+	          <span>${t("mcp:flowMoltis")}</span>
 	          <span class="text-[var(--accent)]">\u2192</span>
-	          <span>Local process / Remote MCP host</span>
+	          <span>${t("mcp:newUi.flowLocalOrRemote")}</span>
 	          <span class="text-[var(--accent)]">\u2192</span>
-	          <span class="opacity-50">External API</span>
+	          <span class="opacity-50">${t("mcp:flowExternalApi")}</span>
 	        </div>
-	        <p class="text-xs text-[var(--muted)]">
-	          Moltis supports both <strong>local stdio MCP processes</strong> (spawned via npm/uvx) and <strong>remote Streamable HTTP/SSE servers</strong>. Remote servers may prompt browser OAuth when first enabled.
-	        </p>
+	        <p class="text-xs text-[var(--muted)]" dangerouslySetInnerHTML=${{ __html: t("mcp:newUi.introDetailRemote") }} />
 	      </div>
 	      <div class="skills-warn max-w-[600px]">
-	        <div class="skills-warn-title">\u26a0\ufe0f Review MCP trust boundaries before enabling</div>
-	        <div>Local stdio servers run with <strong>your full system privileges</strong>. A malicious or compromised local server can read files, exfiltrate credentials, or execute commands.</div>
-	        <div class="mt-1">Remote SSE servers can receive your tool inputs and act in linked external systems. Use trusted hosts and only scopes you intend to grant.</div>
-	        <div class="mt-1">Each enabled server also adds tool definitions to chat context and consumes tokens, enable only what you actively need.</div>
+	        <div class="skills-warn-title">${t("mcp:newUi.securityTitleTrust")}</div>
+	        <div dangerouslySetInnerHTML=${{ __html: t("mcp:newUi.securityLocal") }} />
+	        <div class="mt-1">${t("mcp:newUi.securityRemote")}</div>
+	        <div class="mt-1">${t("mcp:newUi.securityTokensNew")}</div>
 	      </div>
       <${InstallBox} />
       <${FeaturedSection} />
       <${ConfiguredServersSection} />
-      ${loading.value && servers.value.length === 0 && html`<div class="p-6 text-center text-[var(--muted)] text-sm">Loading MCP servers\u2026</div>`}
+      ${loading.value && servers.value.length === 0 && html`<div class="p-6 text-center text-[var(--muted)] text-sm">${t("mcp:newUi.loadingServers")}</div>`}
     </div>
     <${Toasts} />
     <${ConfirmDialog} />
@@ -850,6 +858,7 @@ export function initMcp(container) {
 	_mcpContainer = container;
 	container.style.cssText = "flex-direction:column;padding:0;overflow:hidden;";
 	render(html`<${McpPage} />`, container);
+	applyMcpTranslations();
 }
 
 export function teardownMcp() {

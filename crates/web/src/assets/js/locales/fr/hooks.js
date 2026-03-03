@@ -22,6 +22,7 @@ export default {
 
 	// ── Status badges ───────────────────────────────────────
 	statusIneligible: "Ineligible",
+	statusDisabled: "Disabled",
 	statusActive: "Active",
 
 	// ── Source badges ───────────────────────────────────────
@@ -50,9 +51,19 @@ export default {
 	// ── Tabs ────────────────────────────────────────────────
 	tabPreview: "Preview",
 	tabSource: "Source",
+	buttonEnable: "Enable",
+	buttonDisable: "Disable",
+	buttonSave: "Save",
+	buttonReload: "Reload",
+	loading: "Loading…",
+	saving: "Saving…",
+	reloading: "Reloading…",
 
 	// ── Built-in card ───────────────────────────────────────
 	viewSourceOnGitHub: "View source on GitHub \u2197",
+
+	emptyStateFull:
+		"No hooks discovered. Create a HOOK.md file in .moltis/hooks/my-hook/ or ~/.moltis/hooks/my-hook/ to get started.",
 
 	// ── Toasts ──────────────────────────────────────────────
 	hookEnabled: 'Hook "{{name}}" enabled',

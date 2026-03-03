@@ -28,6 +28,8 @@ export default {
 
 	// ── Loading ─────────────────────────────────────────────
 	loadingSkills: "Loading skills\u2026",
+	searching: "Searching\u2026",
+	loading: "Loading\u2026",
 
 	// ── Featured section ────────────────────────────────────
 	featuredTitle: "Featured Repositories",
@@ -56,6 +58,9 @@ export default {
 	deleteSkillConfirm: 'Delete skill "{{name}}"? This removes the SKILL.md file.',
 	disabling: "Disabling...",
 	deleting: "Deleting...",
+	enable: "Enable",
+	disable: "Disable",
+	delete: "Delete",
 
 	// ── Skill detail panel ──────────────────────────────────
 	protected: "Protected",

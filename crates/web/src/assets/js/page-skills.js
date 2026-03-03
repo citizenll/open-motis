@@ -7,6 +7,7 @@ import { render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { onEvent } from "./events.js";
 import { sendRpc } from "./helpers.js";
+import { t, translateDynamicLiterals } from "./i18n.js";
 import { updateNavCount } from "./nav-counts.js";
 import { registerPage } from "./router.js";
 import { routes } from "./routes.js";
@@ -21,6 +22,12 @@ var toasts = signal([]);
 var toastId = 0;
 var installProgresses = signal([]);
 var installProgressId = 0;
+var SKILLS_TRANSLATION_NAMESPACES = ["skills", "common", "settings"];
+
+function applySkillsTranslations() {
+	if (!_skillsContainer) return;
+	translateDynamicLiterals(_skillsContainer, SKILLS_TRANSLATION_NAMESPACES);
+}
 
 // Lazy prefetch: starts on first navigation to /skills, not at module load
 var prefetchPromise = null;
@@ -165,8 +172,8 @@ function InstallProgressBar() {
 			(
 				p,
 			) => html`<div key=${p.id} style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;background:var(--surface);font-size:.78rem;color:var(--muted)">
-				<div><strong style="color:var(--text-strong)">Installing ${p.source}...</strong></div>
-				<div style="margin-top:3px">This may take a while (download + scan).</div>
+				<div><strong style="color:var(--text-strong)">${t("skills:installingSource", { source: p.source })}</strong></div>
+				<div style="margin-top:3px">${t("skills:installMayTakeWhile")}</div>
     </div>`,
 		)}
   </div>`;
@@ -176,10 +183,10 @@ function SecurityWarning() {
 	var dismissed = useSignal(!!localStorage.getItem("moltis-skills-warning-dismissed"));
 	if (dismissed.value) return null;
 	var threats = [
-		"Execute arbitrary shell commands on your machine (install malware, cryptominers, backdoors)",
-		"Read and exfiltrate sensitive data \u2014 SSH keys, API tokens, browser cookies, credentials, env variables",
-		"Modify or delete files across your filesystem, including other projects",
-		"Send your data to remote servers via curl/wget without your knowledge",
+		t("skills:threat1"),
+		t("skills:threat2"),
+		t("skills:threat3"),
+		t("skills:threat4"),
 	];
 	function dismiss() {
 		localStorage.setItem("moltis-skills-warning-dismissed", "1");
@@ -187,16 +194,16 @@ function SecurityWarning() {
 	}
 
 	return html`<div class="skills-warn">
-    <div class="skills-warn-title">\u26a0\ufe0f Skills run code on your machine \u2014 treat every skill as untrusted</div>
-    <div>Skills are community-authored instructions that the AI agent follows <strong>with your full system privileges</strong>. Popularity or download count does not mean a skill is safe. A malicious skill can instruct the agent to:</div>
+    <div class="skills-warn-title">${t("skills:securityTitle")}</div>
+    <div dangerouslySetInnerHTML=${{ __html: t("skills:securityIntro") }} />
     <ul style="margin:6px 0 6px 18px;padding:0">
       ${threats.map((t) => html`<li>${t}</li>`)}
     </ul>
-    <div style="margin-top:4px"><strong>Triple-check the source code</strong> of every skill before enabling it. Read the full SKILL.md and any scripts it references \u2014 these are the exact instructions the agent will execute on your behalf. Do not trust a skill just because it is popular, highly downloaded, or appears on a leaderboard.</div>
-    <div style="margin-top:6px;color:var(--success, #4a4)">With sandbox mode enabled (Docker, Apple Container, or cgroup), command execution is isolated and the damage a malicious skill can do is significantly limited.</div>
+    <div style="margin-top:4px">${t("skills:securityReview")}</div>
+    <div style="margin-top:6px;color:var(--success, #4a4)">${t("skills:securitySandbox")}</div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
-      <button onClick=${dismiss} style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.72rem;padding:3px 10px;cursor:pointer;color:var(--muted)">Dismiss</button>
-      <button class="provider-btn provider-btn-danger provider-btn-sm" onClick=${emergencyDisableAllSkills}>Disable all third-party skills</button>
+      <button onClick=${dismiss} style="background:none;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.72rem;padding:3px 10px;cursor:pointer;color:var(--muted)">${t("skills:dismiss")}</button>
+      <button class="provider-btn provider-btn-danger provider-btn-sm" onClick=${emergencyDisableAllSkills}>${t("skills:disableAllThirdParty")}</button>
     </div>
   </div>`;
 }
@@ -819,6 +826,9 @@ function SkillsPage() {
 
 		return off;
 	}, []);
+	useEffect(() => {
+		applySkillsTranslations();
+	});
 
 	return html`
     <div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
@@ -849,6 +859,7 @@ export function initSkills(container) {
 	_skillsContainer = container;
 	container.style.cssText = "flex-direction:column;padding:0;overflow:hidden;";
 	render(html`<${SkillsPage} />`, container);
+	applySkillsTranslations();
 }
 
 export function teardownSkills() {

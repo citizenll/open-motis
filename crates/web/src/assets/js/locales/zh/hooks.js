@@ -20,6 +20,7 @@ export default {
 
 	// ── Status badges ───────────────────────────────────────
 	statusIneligible: "不符合条件",
+	statusDisabled: "已禁用",
 	statusActive: "活跃",
 
 	// ── Source badges ───────────────────────────────────────
@@ -48,9 +49,19 @@ export default {
 	// ── Tabs ────────────────────────────────────────────────
 	tabPreview: "预览",
 	tabSource: "源代码",
+	buttonEnable: "启用",
+	buttonDisable: "禁用",
+	buttonSave: "保存",
+	buttonReload: "重新加载",
+	loading: "加载中…",
+	saving: "保存中…",
+	reloading: "重新加载中…",
 
 	// ── Built-in card ───────────────────────────────────────
 	viewSourceOnGitHub: "在 GitHub 上查看源代码 \u2197",
+
+	emptyStateFull:
+		"未发现钩子。请在 .moltis/hooks/my-hook/ 或 ~/.moltis/hooks/my-hook/ 中创建 HOOK.md 文件以开始使用。",
 
 	// ── Toasts ──────────────────────────────────────────────
 	hookEnabled: '钩子 "{{name}}" 已启用',

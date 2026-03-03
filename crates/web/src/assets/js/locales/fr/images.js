@@ -20,10 +20,55 @@ export default {
 		title: "Default image",
 		description:
 			"Base image used for new sessions and projects unless overridden. Leave empty to use the built-in default (ubuntu:25.10).",
+		save: "Save",
+		saving: "Saving…",
 	},
 
 	// ── Image row ──────────────────────────────────────────
 	deleteImage: "Delete image",
+	kindSandbox: "sandbox",
+	kindTool: "tool",
+
+	// ── Containers ─────────────────────────────────────────
+	containers: {
+		title: "Running Containers",
+		titleWithCount: "Running Containers ({{count}})",
+		restart: "Restart",
+		restarting: "Restarting…",
+		restartDaemon: "Restart container daemon",
+		refresh: "Refresh",
+		loading: "Loading…",
+		cleanAll: "Clean All",
+		stopAndRemoveAll: "Stop and remove all containers",
+		cleaning: "Cleaning…",
+		stop: "Stop",
+		stopContainer: "Stop container",
+		delete: "Delete",
+		deleteContainer: "Delete container",
+		noContainersFound: "No containers found.",
+		failedDelete: "Failed to delete {{name}}: {{message}}",
+		failedClean: "Failed to clean containers: {{message}}",
+		failedRestart: "Failed to restart daemon: {{message}}",
+	},
+
+	// ── Shared home ────────────────────────────────────────
+	sharedHome: {
+		title: "Shared home folder",
+		description: "Controls where /home/sandbox is persisted when shared home mode is enabled.",
+		descriptionPrefix: "Controls where",
+		descriptionSuffix: "is persisted when shared home mode is enabled.",
+		statusLabel: "Status:",
+		enabled: "enabled",
+		disabledWithMode: "disabled ({{mode}})",
+		enableToggle: "Enable shared home folder",
+		locationLabel: "Shared folder location",
+		pathPlaceholder: "data_dir()/sandbox/home/shared",
+		configuredPath: "Configured path: {{path}}",
+		configuredPathDefault: "Configured path: default",
+		failedLoad: "Failed to load shared folder settings.",
+		failedSave: "Failed to save shared folder settings.",
+		savedRestart: "Saved. Restart Moltis to apply shared folder changes.",
+	},
 
 	// ── Build section ──────────────────────────────────────
 	build: {
@@ -38,6 +83,7 @@ export default {
 		noPackages: "Please specify at least one package.",
 		builtTag: "Built: {{tag}}",
 		errorPrefix: "Error: {{message}}",
+		failedToBuildImage: "Failed to build image.",
 		allPresent: "All requested packages are already present in {{base}}: {{packages}}. No image build needed.",
 		alreadyInBase: "Already in {{base}}: {{present}}. Only installing: {{missing}}.",
 	},

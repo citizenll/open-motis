@@ -15,6 +15,7 @@ import {
 import { onEvent } from "./events.js";
 import { get as getGon } from "./gon.js";
 import { sendRpc } from "./helpers.js";
+import { translateDynamicLiterals } from "./i18n.js";
 import { updateNavCount } from "./nav-counts.js";
 import { connected } from "./signals.js";
 import * as S from "./state.js";
@@ -47,6 +48,12 @@ var waQrData = signal(null);
 var waQrSvg = signal(null);
 var waPairingAccountId = signal(null);
 var waPairingError = signal(null);
+var CHANNELS_TRANSLATION_NAMESPACES = ["channels", "common", "settings"];
+
+function applyChannelsTranslations() {
+	if (!_channelsContainer) return;
+	translateDynamicLiterals(_channelsContainer, CHANNELS_TRANSLATION_NAMESPACES);
+}
 
 function channelType(type) {
 	return type || "telegram";
@@ -1283,6 +1290,9 @@ function ChannelsPage() {
 			S.setChannelEventUnsub(null);
 		};
 	}, [connected.value]);
+	useEffect(() => {
+		applyChannelsTranslations();
+	});
 
 	return html`
     <div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
@@ -1326,6 +1336,7 @@ export function initChannels(container) {
 	sendersAccount.value = "";
 	senders.value = [];
 	render(html`<${ChannelsPage} />`, container);
+	applyChannelsTranslations();
 }
 
 export function teardownChannels() {

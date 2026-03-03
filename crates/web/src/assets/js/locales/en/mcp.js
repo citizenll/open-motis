@@ -80,4 +80,52 @@ export default {
 	failedToUpdate: "Failed to update: {{error}}",
 	removed: 'Removed "{{name}}"',
 	removeConfirm: 'This will stop and remove the "{{name}}" MCP tool. This action cannot be undone.',
+
+	newUi: {
+		unknownError: "unknown error",
+		oauthUrlMissing: "OAuth URL missing from response",
+		linearDesc: "Remote Linear MCP server with browser OAuth",
+		linearHint: "After adding, click Enable and complete OAuth in your browser",
+		transportSseRemote: "sse remote",
+		transportStdioLocal: "stdio local",
+		missingUrl: "(missing URL)",
+		flowLocalOrRemote: "Local process / Remote MCP host",
+		introDetailRemote:
+			"Moltis supports both <strong>local stdio MCP processes</strong> (spawned via npm/uvx) and <strong>remote Streamable HTTP/SSE servers</strong>. Remote servers may prompt browser OAuth when first enabled.",
+		securityTitleTrust: "⚠️ Review MCP trust boundaries before enabling",
+		securityLocal:
+			"Local stdio servers run with <strong>your full system privileges</strong>. A malicious or compromised local server can read files, exfiltrate credentials, or execute commands.",
+		securityRemote:
+			"Remote SSE servers can receive your tool inputs and act in linked external systems. Use trusted hosts and only scopes you intend to grant.",
+		securityTokensNew:
+			"Each enabled server also adds tool definitions to chat context and consumes tokens, enable only what you actively need.",
+		add: "Add",
+		configure: "Configure",
+		cancel: "Cancel",
+		serverUrl: "Server URL",
+		ifOAuth:
+			"If the server requires OAuth, your browser opens for sign-in when you enable or restart it.",
+		authPending: "OAuth pending",
+		authConnected: "OAuth connected",
+		authFailed: "OAuth failed",
+		authNotRequired: "OAuth not required",
+		connectOAuth: "Connect OAuth",
+		reAuth: "Re-auth",
+		enable: "Enable",
+		disable: "Disable",
+		remove: "Remove",
+		transport: "Transport",
+		localStdioRequiresCommand: "Local stdio servers require a command",
+		remoteRequiresUrl: "Remote MCP servers require a URL",
+		failedToReauth: "Failed to re-auth: {{error}}",
+		failedToStartOAuth: "Failed to start OAuth: {{error}}",
+		oauthRequired: 'OAuth required for "{{name}}"',
+		oauthStarted: 'OAuth started for "{{name}}"',
+		failedToToggle: "Failed to {{action}}: {{error}}",
+		stateLabel: "{{state}}",
+		toolCountText: "{{count}} tool{{s}}",
+		noServersConfiguredRemote:
+			"No MCP tools configured. Add one from the popular list above or enter a custom stdio command / remote URL.",
+		loadingServers: "Loading MCP servers…",
+	},
 };

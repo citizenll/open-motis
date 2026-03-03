@@ -5,6 +5,7 @@ import { html } from "htm/preact";
 import { render } from "preact";
 import { useEffect } from "preact/hooks";
 import { localizedApiErrorMessage } from "./helpers.js";
+import { t, translateDynamicLiterals } from "./i18n.js";
 import { updateNavCount } from "./nav-counts.js";
 import { sandboxInfo } from "./signals.js";
 
@@ -33,8 +34,14 @@ var sharedHomeLoading = signal(false);
 var sharedHomeSaving = signal(false);
 var sharedHomeMsg = signal("");
 var sharedHomeErr = signal("");
+var IMAGES_TRANSLATION_NAMESPACES = ["images", "common", "settings"];
 var SANDBOX_DISABLED_HINT =
 	"Sandboxes are disabled on cloud deploys without a container runtime. Install on a VM with Docker or Apple Container to enable this feature.";
+
+function applyImagesTranslations() {
+	if (!_imagesContainer) return;
+	translateDynamicLiterals(_imagesContainer, IMAGES_TRANSLATION_NAMESPACES);
+}
 
 function sandboxRuntimeAvailable() {
 	return (sandboxInfo.value?.backend || "none") !== "none";
@@ -609,15 +616,18 @@ function DefaultImageSelector() {
 }
 
 function SharedHomeSection() {
-	var modeLabel = sharedHomeMode.value === "shared" ? "enabled" : `disabled (${sharedHomeMode.value})`;
+	var modeLabel =
+		sharedHomeMode.value === "shared"
+			? t("images:sharedHome.enabled")
+			: t("images:sharedHome.disabledWithMode", { mode: sharedHomeMode.value });
 
 	return html`<div class="max-w-form" style="border-top:1px solid var(--border);padding-top:16px;">
-    <h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Shared home folder</h3>
+    <h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("images:sharedHome.title")}</h3>
     <p class="text-xs text-[var(--muted)] leading-relaxed" style="margin:0 0 10px;">
-      Controls where <code>/home/sandbox</code> is persisted when shared home mode is enabled.
+      ${t("images:sharedHome.descriptionPrefix")}<code>/home/sandbox</code>${t("images:sharedHome.descriptionSuffix")}
     </p>
     <div class="text-xs text-[var(--muted)]" style="margin-bottom:10px;">
-      Status: <span style="color:${sharedHomeMode.value === "shared" ? "var(--accent)" : "var(--muted)"}">${modeLabel}</span>
+      ${t("images:sharedHome.statusLabel")} <span style="color:${sharedHomeMode.value === "shared" ? "var(--accent)" : "var(--muted)"}">${modeLabel}</span>
     </div>
     ${
 			sharedHomeLoading.value
@@ -697,6 +707,9 @@ function ImagesPage() {
 		fetchDiskUsage();
 		fetchSharedHomeConfig();
 	}, []);
+	useEffect(() => {
+		applyImagesTranslations();
+	});
 
 	return html`
     <div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
@@ -804,6 +817,7 @@ export function initImages(container) {
 	sharedHomeMsg.value = "";
 	sharedHomeErr.value = "";
 	render(html`<${ImagesPage} />`, container);
+	applyImagesTranslations();
 }
 
 export function teardownImages() {

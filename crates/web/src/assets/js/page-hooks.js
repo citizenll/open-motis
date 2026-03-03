@@ -6,6 +6,7 @@ import { render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { onEvent } from "./events.js";
 import { sendRpc } from "./helpers.js";
+import { translateDynamicLiterals } from "./i18n.js";
 import { updateNavCount } from "./nav-counts.js";
 
 // ── Signals ─────────────────────────────────────────────────
@@ -13,6 +14,12 @@ var hooks = signal([]);
 var loading = signal(false);
 var toasts = signal([]);
 var toastId = 0;
+var HOOKS_TRANSLATION_NAMESPACES = ["hooks", "common", "settings"];
+
+function applyHooksTranslations() {
+	if (!_hooksContainer) return;
+	translateDynamicLiterals(_hooksContainer, HOOKS_TRANSLATION_NAMESPACES);
+}
 
 // ── Helpers ─────────────────────────────────────────────────
 function showToast(message, type) {
@@ -296,6 +303,9 @@ function HooksPage() {
 		});
 		return off;
 	}, []);
+	useEffect(() => {
+		applyHooksTranslations();
+	});
 
 	async function handleReload() {
 		loading.value = true;
@@ -360,6 +370,7 @@ export function initHooks(container) {
 	_hooksContainer = container;
 	container.style.cssText = "flex-direction:column;padding:0;overflow:hidden;";
 	render(html`<${HooksPage} />`, container);
+	applyHooksTranslations();
 }
 
 export function teardownHooks() {

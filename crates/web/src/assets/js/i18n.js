@@ -56,6 +56,7 @@ var namespaces = {
 	common: (lng) => import(`./locales/${lng}/common.js`),
 	errors: (lng) => import(`./locales/${lng}/errors.js`),
 	settings: (lng) => import(`./locales/${lng}/settings.js`),
+	agents: (lng) => import(`./locales/${lng}/agents.js`),
 	providers: (lng) => import(`./locales/${lng}/providers.js`),
 	chat: (lng) => import(`./locales/${lng}/chat.js`),
 	onboarding: (lng) => import(`./locales/${lng}/onboarding.js`),
@@ -68,9 +69,11 @@ var namespaces = {
 	projects: (lng) => import(`./locales/${lng}/projects.js`),
 	images: (lng) => import(`./locales/${lng}/images.js`),
 	metrics: (lng) => import(`./locales/${lng}/metrics.js`),
+	networkAudit: (lng) => import(`./locales/${lng}/networkAudit.js`),
 	pwa: (lng) => import(`./locales/${lng}/pwa.js`),
 	sessions: (lng) => import(`./locales/${lng}/sessions.js`),
 	logs: (lng) => import(`./locales/${lng}/logs.js`),
+	terminal: (lng) => import(`./locales/${lng}/terminal.js`),
 };
 
 // ── Load all namespace bundles for a language ───────────────
@@ -217,5 +220,180 @@ export function translateStaticElements(root) {
 		applyStaticTranslation(el, el.getAttribute("data-i18n-title"), "title");
 		applyStaticTranslation(el, el.getAttribute("data-i18n-placeholder"), "placeholder");
 		applyStaticTranslation(el, el.getAttribute("data-i18n-aria-label"), "aria-label");
+	}
+}
+
+var literalMatcherCache = new Map();
+var skipClosestSelector = "code,pre,textarea,input,[contenteditable='true'],.skill-body-md,.terminal-output";
+
+function escapeRegex(source) {
+	return source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeForMatch(value) {
+	if (typeof value !== "string") return "";
+	return value
+		.trim()
+		.replace(/\s+/g, " ");
+}
+
+function flattenLeafStrings(obj, prefix, out) {
+	if (!(obj && typeof obj === "object")) return;
+	for (var key of Object.keys(obj)) {
+		var value = obj[key];
+		var next = prefix ? `${prefix}.${key}` : key;
+		if (value && typeof value === "object" && !Array.isArray(value)) {
+			flattenLeafStrings(value, next, out);
+			continue;
+		}
+		if (typeof value === "string") {
+			out.push({ key: next, value: value });
+		}
+	}
+}
+
+function buildMatcherForNamespace(ns) {
+	if (literalMatcherCache.has(ns)) return literalMatcherCache.get(ns);
+	var bundle = i18next.getResourceBundle("en", ns);
+	var matcher = {
+		exact: new Map(),
+		exactNormalized: new Map(),
+		patterns: [],
+	};
+	if (!(bundle && typeof bundle === "object")) {
+		literalMatcherCache.set(ns, matcher);
+		return matcher;
+	}
+
+	var leaves = [];
+	flattenLeafStrings(bundle, "", leaves);
+	for (var leaf of leaves) {
+		var value = leaf.value;
+		if (!value) continue;
+		var fullKey = `${ns}:${leaf.key}`;
+		if (!value.includes("{{")) {
+			if (!matcher.exact.has(value)) matcher.exact.set(value, fullKey);
+			var normalizedExact = normalizeForMatch(value);
+			if (normalizedExact && !matcher.exactNormalized.has(normalizedExact)) {
+				matcher.exactNormalized.set(normalizedExact, fullKey);
+			}
+			continue;
+		}
+		var names = [];
+		var regexSource = "";
+		var tokenRe = /{{\s*([^}]+?)\s*}}/g;
+		var last = 0;
+		var m;
+		while ((m = tokenRe.exec(value)) !== null) {
+			regexSource += escapeRegex(value.slice(last, m.index));
+			regexSource += "(.+?)";
+			names.push(String(m[1]).trim());
+			last = m.index + m[0].length;
+		}
+		regexSource += escapeRegex(value.slice(last));
+		if (!names.length) continue;
+		var normalizedPattern = normalizeForMatch(value);
+		var normalizedRegexSource = "";
+		last = 0;
+		tokenRe.lastIndex = 0;
+		while ((m = tokenRe.exec(normalizedPattern)) !== null) {
+			normalizedRegexSource += escapeRegex(normalizedPattern.slice(last, m.index));
+			normalizedRegexSource += "(.+?)";
+			last = m.index + m[0].length;
+		}
+		normalizedRegexSource += escapeRegex(normalizedPattern.slice(last));
+		matcher.patterns.push({
+			key: fullKey,
+			regex: new RegExp(`^${regexSource}$`),
+			normalizedRegex: new RegExp(`^${normalizedRegexSource}$`),
+			names: names,
+			priority: value.length,
+		});
+	}
+
+	matcher.patterns.sort((a, b) => b.priority - a.priority);
+	literalMatcherCache.set(ns, matcher);
+	return matcher;
+}
+
+function translateLiteralInNamespace(ns, text) {
+	var matcher = buildMatcherForNamespace(ns);
+	var exactKey = matcher.exact.get(text);
+	var normalizedText = normalizeForMatch(text);
+	if (!exactKey && normalizedText) {
+		exactKey = matcher.exactNormalized.get(normalizedText);
+	}
+	if (exactKey) {
+		var exactTranslated = i18next.t(exactKey);
+		if (exactTranslated && exactTranslated !== exactKey) return exactTranslated;
+	}
+
+	for (var pattern of matcher.patterns) {
+		var match = text.match(pattern.regex) || (normalizedText ? normalizedText.match(pattern.normalizedRegex) : null);
+		if (!match) continue;
+		var vars = {};
+		for (var i = 0; i < pattern.names.length; i++) {
+			vars[pattern.names[i]] = match[i + 1];
+		}
+		var translated = i18next.t(pattern.key, vars);
+		if (translated && translated !== pattern.key) return translated;
+	}
+	return null;
+}
+
+function translateLiteralAcrossNamespaces(text, namespaceList) {
+	for (var ns of namespaceList) {
+		var translated = translateLiteralInNamespace(ns, text);
+		if (translated && translated !== text) return translated;
+	}
+	return null;
+}
+
+function shouldSkipElement(el) {
+	if (!el || !el.closest) return false;
+	return Boolean(el.closest(skipClosestSelector));
+}
+
+/**
+ * Translate hard-coded English text in dynamic Preact pages by reverse-matching
+ * against English bundles and re-emitting localized strings for the active locale.
+ */
+export function translateDynamicLiterals(root, namespaceList) {
+	if (!root || i18next.language === "en") return;
+	var namespacesToUse =
+		Array.isArray(namespaceList) && namespaceList.length ? namespaceList : Object.keys(namespaces);
+
+	if (root.nodeType === 1 && !shouldSkipElement(root)) {
+		for (var attr of ["title", "placeholder", "aria-label"]) {
+			var value = root.getAttribute(attr);
+			if (!value) continue;
+			var translated = translateLiteralAcrossNamespaces(value, namespacesToUse);
+			if (translated && translated !== value) root.setAttribute(attr, translated);
+		}
+	}
+
+	var nodes = root.querySelectorAll("[title],[placeholder],[aria-label]");
+	for (var node of nodes) {
+		if (shouldSkipElement(node)) continue;
+		for (var attr of ["title", "placeholder", "aria-label"]) {
+			var value = node.getAttribute(attr);
+			if (!value) continue;
+			var translated = translateLiteralAcrossNamespaces(value, namespacesToUse);
+			if (translated && translated !== value) node.setAttribute(attr, translated);
+		}
+	}
+
+	var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+	var current;
+	while ((current = walker.nextNode())) {
+		var parent = current.parentElement;
+		if (!parent || shouldSkipElement(parent)) continue;
+		var raw = current.nodeValue;
+		if (!raw) continue;
+		var trimmed = raw.trim();
+		if (!trimmed) continue;
+		var translated = translateLiteralAcrossNamespaces(trimmed, namespacesToUse);
+		if (!(translated && translated !== trimmed)) continue;
+		current.nodeValue = raw.replace(trimmed, translated);
 	}
 }

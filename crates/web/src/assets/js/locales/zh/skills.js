@@ -28,6 +28,8 @@ export default {
 
 	// ── Loading ─────────────────────────────────────────────
 	loadingSkills: "加载技能中\u2026",
+	searching: "搜索中\u2026",
+	loading: "加载中\u2026",
 
 	// ── Featured section ────────────────────────────────────
 	featuredTitle: "精选仓库",
@@ -56,6 +58,9 @@ export default {
 	deleteSkillConfirm: '删除技能 "{{name}}"？这将移除 SKILL.md 文件。',
 	disabling: "禁用中...",
 	deleting: "删除中...",
+	enable: "启用",
+	disable: "禁用",
+	delete: "删除",
 
 	// ── Skill detail panel ──────────────────────────────────
 	protected: "受保护",

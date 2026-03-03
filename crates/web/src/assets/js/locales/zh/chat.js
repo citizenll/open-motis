@@ -157,7 +157,7 @@ export default {
 	tokenBar: {
 		inLabel: " 输入 / ",
 		outLabel: " 输出 \u00b7 ",
-		tokensSuffix: " tokens",
+		tokensSuffix: " 个 token",
 		contextLeft: " \u00b7 自动压缩前剩余上下文：{{pct}}%",
 		toolsDisabled: " \u00b7 工具：已禁用",
 	},
@@ -189,7 +189,7 @@ export default {
 		chars: "字符",
 		toolCall: "工具调用",
 		toolCall_plural: "工具调用",
-		id: "id",
+		id: "编号",
 		copied: "已复制！",
 		messagesSummary: "{{count}} 条消息 \xb7 系统提示 {{systemChars}} 字符 \xb7 总计 {{totalChars}} 字符",
 	},

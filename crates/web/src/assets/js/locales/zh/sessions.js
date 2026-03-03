@@ -40,13 +40,13 @@ export default {
 	item: {
 		activeTelegram: "活跃 Telegram 会话",
 		inactiveTelegram: "Telegram 会话（不活跃）",
-		fork: "fork@{{point}}",
+		fork: "分叉@{{point}}",
 	},
 
 	// Session metadata (footer)
 	meta: {
 		tokenUsage: "{{inTokens}} 输入 / {{outTokens}} 输出",
-		modelProvider: "{{provider}} / {{model}}",
+		modelProvider: "{{provider}} · {{model}}",
 	},
 
 	// Session actions

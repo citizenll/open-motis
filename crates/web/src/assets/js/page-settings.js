@@ -9,7 +9,7 @@ import { onEvent } from "./events.js";
 import * as gon from "./gon.js";
 import { refresh as refreshGon } from "./gon.js";
 import { localizedApiErrorMessage, sendRpc } from "./helpers.js";
-import { setLocale } from "./i18n.js";
+import { setLocale, t, translateDynamicLiterals, translateStaticElements } from "./i18n.js";
 import { updateIdentity, validateIdentityFields } from "./identity-utils.js";
 import { initAgents, teardownAgents } from "./page-agents.js";
 // Moved page init/teardown imports
@@ -49,9 +49,38 @@ var activeSubPath = signal("");
 var mobileSidebarVisible = signal(true);
 var mounted = false;
 var containerRef = null;
+var SETTINGS_TRANSLATION_NAMESPACES = [
+	"settings",
+	"agents",
+	"common",
+	"crons",
+	"channels",
+	"hooks",
+	"images",
+	"logs",
+	"mcp",
+	"networkAudit",
+	"skills",
+	"terminal",
+	"providers",
+	"metrics",
+	"projects",
+	"sessions",
+	"onboarding",
+	"chat",
+];
+
+function applySettingsTranslations() {
+	if (!containerRef) return;
+	translateStaticElements(containerRef);
+	translateDynamicLiterals(containerRef, SETTINGS_TRANSLATION_NAMESPACES);
+}
 
 function rerender() {
-	if (containerRef) render(html`<${SettingsPage} />`, containerRef);
+	if (containerRef) {
+		render(html`<${SettingsPage} />`, containerRef);
+		applySettingsTranslations();
+	}
 }
 
 function isMobileViewport() {
@@ -100,34 +129,34 @@ function fetchIdentity() {
 // ── Sidebar navigation items ─────────────────────────────────
 
 var sections = [
-	{ group: "General" },
-	{ id: "identity", label: "Identity" },
-	{ id: "agents", label: "Agents", page: true },
-	{ id: "environment", label: "Environment" },
-	{ id: "memory", label: "Memory" },
-	{ id: "notifications", label: "Notifications" },
-	{ id: "crons", label: "Crons", page: true },
-	{ id: "heartbeat", label: "Heartbeat", page: true },
-	{ group: "Security" },
-	{ id: "security", label: "Authentication" },
-	{ id: "vault", label: "Encryption" },
-	{ id: "tailscale", label: "Tailscale" },
-	{ id: "network-audit", label: "Network Audit", page: true },
-	{ id: "sandboxes", label: "Sandboxes", page: true },
-	{ group: "Integrations" },
-	{ id: "channels", label: "Channels", page: true },
-	{ id: "hooks", label: "Hooks", page: true },
-	{ id: "providers", label: "LLMs", page: true },
-	{ id: "mcp", label: "MCP", page: true },
-	{ id: "skills", label: "Skills", page: true },
-	{ id: "import", label: "OpenClaw Import" },
-	{ id: "voice", label: "Voice" },
-	{ group: "Systems" },
-	{ id: "terminal", label: "Terminal", page: true },
-	{ id: "monitoring", label: "Monitoring", page: true },
-	{ id: "logs", label: "Logs", page: true },
-	{ id: "graphql", label: "GraphQL" },
-	{ id: "config", label: "Configuration" },
+	{ groupKey: "general" },
+	{ id: "identity", labelKey: "identity" },
+	{ id: "agents", labelKey: "agents", page: true },
+	{ id: "environment", labelKey: "environment" },
+	{ id: "memory", labelKey: "memory" },
+	{ id: "notifications", labelKey: "notifications" },
+	{ id: "crons", labelKey: "crons", page: true },
+	{ id: "heartbeat", labelKey: "heartbeat", page: true },
+	{ groupKey: "security" },
+	{ id: "security", labelKey: "authentication" },
+	{ id: "vault", labelKey: "encryption" },
+	{ id: "tailscale", labelKey: "tailscale" },
+	{ id: "network-audit", labelKey: "networkAudit", page: true },
+	{ id: "sandboxes", labelKey: "sandboxes", page: true },
+	{ groupKey: "integrations" },
+	{ id: "channels", labelKey: "channels", page: true },
+	{ id: "hooks", labelKey: "hooks", page: true },
+	{ id: "providers", labelKey: "llms", page: true },
+	{ id: "mcp", labelKey: "mcp", page: true },
+	{ id: "skills", labelKey: "skills", page: true },
+	{ id: "import", labelKey: "openClawImport" },
+	{ id: "voice", labelKey: "voice" },
+	{ groupKey: "systems" },
+	{ id: "terminal", labelKey: "terminal", page: true },
+	{ id: "monitoring", labelKey: "monitoring", page: true },
+	{ id: "logs", labelKey: "logs", page: true },
+	{ id: "graphql", labelKey: "graphql" },
+	{ id: "config", labelKey: "configuration" },
 ];
 
 function getVisibleSections() {
@@ -154,17 +183,17 @@ function SettingsSidebar() {
 					onClick=${() => {
 						navigate(routes.chats);
 					}}
-					title="Back to chat sessions"
+					title=${t("common:nav.backToChatSessions")}
 			>
 				<span class="icon icon-chat"></span>
-				Back to Chats
+				${t("settings:nav.backToChats")}
 			</button>
 		</div>
 		<div class="settings-sidebar-nav">
 			${getVisibleSections().map((s) =>
-				s.group
-					? html`<div key=${s.group} class="settings-group-label">
-							${s.group}
+				s.groupKey
+					? html`<div key=${s.groupKey} class="settings-group-label">
+							${t(`settings:nav.${s.groupKey}`)}
 						</div>`
 					: html`<button
 							key=${s.id}
@@ -178,7 +207,7 @@ function SettingsSidebar() {
 								navigate(settingsPath(s.id));
 							}}
 						>
-							${s.label}
+							${t(`settings:nav.${s.labelKey}`)}
 						</button>`,
 			)}
 		</div>
@@ -245,7 +274,7 @@ function IdentitySection() {
 
 	if (loading.value) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<div class="text-xs text-[var(--muted)]">Loading\u2026</div>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
@@ -279,7 +308,7 @@ function IdentitySection() {
 				setShowFaviconReloadHint(emojiChanged && isSafariBrowser());
 				flashSaved();
 			} else {
-				setError(res?.error?.message || "Failed to save");
+				setError(res?.error?.message || t("settings:identity.failedToSave"));
 			}
 			rerender();
 		});
@@ -301,7 +330,7 @@ function IdentitySection() {
 				setShowFaviconReloadHint(emojiChanged && isSafariBrowser());
 				flashSaved();
 			} else {
-				setError(res?.error?.message || "Failed to save emoji");
+				setError(res?.error?.message || t("settings:identity.failedToSaveEmoji"));
 			}
 			rerender();
 		});
@@ -314,7 +343,7 @@ function IdentitySection() {
 		if (trimmed === currentValue) return;
 
 		if (!trimmed) {
-			setError(field === "name" ? "Agent name is required." : "Your name is required.");
+			setError(field === "name" ? t("settings:identity.agentNameRequired") : t("settings:identity.yourNameRequired"));
 			return;
 		}
 
@@ -343,7 +372,7 @@ function IdentitySection() {
 				setUserName(res.payload?.user_name || "");
 				flashSaved();
 			} else {
-				setError(res?.error?.message || "Failed to save");
+				setError(res?.error?.message || t("settings:identity.failedToSave"));
 			}
 			rerender();
 		});
@@ -387,47 +416,47 @@ function IdentitySection() {
 			})
 			.catch((err) => {
 				setLanguageSaving(false);
-				setLanguageError(err?.message || "Failed to update language");
+				setLanguageError(err?.message || t("settings:identity.failedToUpdateLanguage"));
 				rerender();
 			});
 	}
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Identity</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:identity.title")}</h2>
 		${
 			isNew
 				? html`<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-				Welcome! Set up your agent's identity to get started.
+				${t("settings:identity.welcome")}
 			</p>`
 				: null
 		}
 		<form onSubmit=${onSave} style="max-width:600px;display:flex;flex-direction:column;gap:16px;">
 			<!-- Agent section -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Agent</h3>
-				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">Saved to <code>IDENTITY.md</code> in your workspace root.</p>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:identity.agent")}</h3>
+				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">${t("settings:identity.agentSavedTo")}</p>
 				<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;">
 						<div>
-							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Name *</div>
+							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:identity.nameLabel")}</div>
 							<input type="text" class="provider-key-input" style="width:100%;"
 								value=${name} onInput=${(e) => setName(e.target.value)} onBlur=${onNameBlur}
-								placeholder="e.g. Rex" />
+								placeholder=${t("settings:identity.namePlaceholder")} />
 						</div>
 						<div>
-							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Emoji</div>
+							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:identity.emojiLabel")}</div>
 							<${EmojiPicker} value=${emoji} onChange=${setEmoji} onSelect=${onEmojiSelect} />
 						</div>
 					<div style="grid-column:1/-1;">
-						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Theme</div>
+						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:identity.creatureLabel")}</div>
 						<input type="text" class="provider-key-input" style="width:100%;"
 							value=${theme} onInput=${(e) => setTheme(e.target.value)}
-							placeholder="e.g. wise owl, chill fox" />
+							placeholder=${t("settings:identity.creaturePlaceholder")} />
 					</div>
 					</div>
 					${
 						showFaviconReloadHint
 							? html`<div class="mt-3 rounded border border-[var(--border)] bg-[var(--surface2)] p-2 text-xs text-[var(--muted)]">
-								favicon updates requires reload and may be cached for minutes, <button type="button" class="cursor-pointer bg-transparent p-0 text-xs text-[var(--text)] underline" onClick=${onReloadForFavicon}>requires reload</button>.
+								${t("settings:identity.faviconHint")} <button type="button" class="cursor-pointer bg-transparent p-0 text-xs text-[var(--text)] underline" onClick=${onReloadForFavicon}>${t("settings:identity.requiresReload")}</button>.
 							</div>`
 							: null
 					}
@@ -435,22 +464,22 @@ function IdentitySection() {
 
 			<!-- User section -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">User</h3>
-				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">Saved to <code>USER.md</code> in your workspace root.</p>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:identity.user")}</h3>
+				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">${t("settings:identity.userSavedTo")}</p>
 					<div>
-						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Your name *</div>
+						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:identity.yourNameLabel")}</div>
 						<input type="text" class="provider-key-input" style="width:100%;max-width:280px;"
 							value=${userName} onInput=${(e) => setUserName(e.target.value)} onBlur=${onUserNameBlur}
-							placeholder="e.g. Alice" />
+							placeholder=${t("settings:identity.yourNamePlaceholder")} />
 					</div>
 				</div>
 
 			<!-- Language section -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Language</h3>
-				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">Choose the UI language for this browser.</p>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:identity.languageSection")}</h3>
+				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">${t("settings:identity.languageDescription")}</p>
 				<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-					<label for="identityLanguageSelect" class="text-xs text-[var(--muted)]">UI language</label>
+					<label for="identityLanguageSelect" class="text-xs text-[var(--muted)]">${t("settings:identity.languageLabel")}</label>
 					<select
 						id="identityLanguageSelect"
 						class="provider-key-input"
@@ -463,10 +492,10 @@ function IdentitySection() {
 							rerender();
 						}}
 					>
-						<option value="auto">Browser default</option>
-						<option value="en">English</option>
-						<option value="fr">French</option>
-						<option value="zh">简体中文</option>
+						<option value="auto">${t("settings:identity.languageAuto")}</option>
+						<option value="en">${t("settings:identity.languageEnglish")}</option>
+						<option value="fr">${t("settings:identity.languageFrench")}</option>
+						<option value="zh">${t("settings:identity.languageChinese")}</option>
 					</select>
 					<button
 						type="button"
@@ -475,17 +504,17 @@ function IdentitySection() {
 						disabled=${languageSaving}
 						onClick=${onApplyLanguage}
 					>
-						${languageSaving ? "Applying..." : "Apply language"}
+						${languageSaving ? t("settings:graphql.applying") : t("settings:identity.applyLanguage")}
 					</button>
-					${languageSaved ? html`<span class="text-xs" style="color:var(--accent);">Language updated</span>` : null}
+					${languageSaved ? html`<span class="text-xs" style="color:var(--accent);">${t("settings:identity.languageUpdated")}</span>` : null}
 					${languageError ? html`<span class="text-xs" style="color:var(--error);">${languageError}</span>` : null}
 				</div>
 			</div>
 
 			<!-- Soul section -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:4px;">Soul</h3>
-				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">Personality and tone injected into every conversation. Saved to <code>SOUL.md</code> in your workspace root. Leave empty for the default.</p>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:4px;">${t("settings:identity.soul")}</h3>
+				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">${t("settings:identity.soulDescription")}</p>
 				<textarea
 					class="provider-key-input"
 					rows="8"
@@ -497,16 +526,16 @@ function IdentitySection() {
 				${
 					soul
 						? html`<button type="button" class="provider-btn" style="margin-top:6px;font-size:.75rem;"
-							onClick=${onResetSoul}>Reset to default</button>`
+							onClick=${onResetSoul}>${t("common:actions.resetToDefault")}</button>`
 						: null
 				}
 			</div>
 
 					<div style="display:flex;align-items:center;gap:8px;">
 						<button type="submit" class="provider-btn" disabled=${saving || emojiSaving || nameSaving || userNameSaving}>
-							${saving || emojiSaving || nameSaving || userNameSaving ? "Saving\u2026" : "Save"}
+							${saving || emojiSaving || nameSaving || userNameSaving ? t("common:actions.saving") : t("common:actions.save")}
 						</button>
-				${saved ? html`<span class="text-xs" style="color:var(--accent);">Saved</span>` : null}
+				${saved ? html`<span class="text-xs" style="color:var(--accent);">${t("common:actions.saved")}</span>` : null}
 				${error ? html`<span class="text-xs" style="color:var(--error);">${error}</span>` : null}
 			</div>
 		</form>
@@ -551,12 +580,12 @@ function EnvironmentSection() {
 		setEnvMsg(null);
 		var key = newKey.trim();
 		if (!key) {
-			setEnvErr("Key is required.");
+			setEnvErr(t("settings:environment.keyRequired"));
 			rerender();
 			return;
 		}
 		if (!/^[A-Za-z0-9_]+$/.test(key)) {
-			setEnvErr("Key must contain only letters, digits, and underscores.");
+			setEnvErr(t("settings:environment.keyInvalid"));
 			rerender();
 			return;
 		}
@@ -571,14 +600,14 @@ function EnvironmentSection() {
 				if (r.ok) {
 					setNewKey("");
 					setNewValue("");
-					setEnvMsg("Variable saved.");
+					setEnvMsg(t("settings:environment.variableSaved"));
 					setTimeout(() => {
 						setEnvMsg(null);
 						rerender();
 					}, 2000);
 					fetchEnvVars();
 				} else {
-					return r.json().then((d) => setEnvErr(localizedApiErrorMessage(d, "Failed to save")));
+					return r.json().then((d) => setEnvErr(localizedApiErrorMessage(d, t("settings:identity.failedToSave"))));
 				}
 				setSaving(false);
 				rerender();
@@ -623,19 +652,19 @@ function EnvironmentSection() {
 	var envVaultStatus = gon.get("vault_status");
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Environment Variables</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:environment.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-			Environment variables are injected into sandbox command execution. Values are write-only and never displayed.
+			${t("settings:environment.description")}
 		</p>
 		${
 			envVaultStatus && envVaultStatus !== "disabled"
 				? html`<div class="text-xs" style="max-width:600px;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
 			${
 				envVaultStatus === "unsealed"
-					? html`<span style="color:var(--accent);">Vault unlocked.</span> Your keys are stored encrypted.`
+					? html`<span style="color:var(--accent);">${t("settings:security.vaultUnlocked")}</span> ${t("settings:environment.keysStoredEncrypted")}`
 					: envVaultStatus === "sealed"
-						? html`<span style="color:var(--warning,var(--error));">Vault locked.</span> Encrypted keys can\u2019t be read \u2014 sandbox commands won\u2019t work. <a href="/settings/vault" style="color:inherit;text-decoration:underline;">Unlock in Encryption settings.</a>`
-						: html`<span class="text-[var(--muted)]">Vault not set up.</span> <a href="/settings/security" style="color:inherit;text-decoration:underline;">Set a password</a> to encrypt your stored keys.`
+						? html`<span style="color:var(--warning,var(--error));">${t("settings:vault.statusLocked")}.</span> ${t("settings:security.loginOrUnlock")} <a href="/settings/vault" style="color:inherit;text-decoration:underline;">${t("settings:environment.unlockInEncryptionSettings")}</a>`
+						: html`<span class="text-[var(--muted)]">${t("settings:environment.vaultNotSetUp")}</span> <a href="/settings/security" style="color:inherit;text-decoration:underline;">${t("settings:environment.setPassword")}</a> ${t("settings:environment.toEncryptStoredKeys")}`
 			}
 		</div>`
 				: null
@@ -643,7 +672,7 @@ function EnvironmentSection() {
 
 		${
 			envLoading
-				? html`<div class="text-xs text-[var(--muted)]">Loading\u2026</div>`
+				? html`<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>`
 				: html`
 			<!-- Existing variables -->
 			<div style="max-width:600px;">
@@ -661,8 +690,8 @@ function EnvironmentSection() {
 									<code style="font-size:0.8rem;font-family:var(--font-mono);">${v.key}</code>
 									${
 										v.encrypted
-											? html`<span class="provider-item-badge configured">Encrypted</span>`
-											: html`<span class="provider-item-badge muted">Plaintext</span>`
+											? html`<span class="provider-item-badge configured">${t("settings:environment.encrypted")}</span>`
+											: html`<span class="provider-item-badge muted">${t("settings:environment.plaintext")}</span>`
 									}
 									<input type="password" class="provider-key-input"
 										name="env_update_value"
@@ -672,17 +701,17 @@ function EnvironmentSection() {
 										spellcheck="false"
 										value=${updateValue}
 										onInput=${(e) => setUpdateValue(e.target.value)}
-										placeholder="New value" style="flex:1" autofocus />
-									<button type="submit" class="provider-btn">Save</button>
-									<button type="button" class="provider-btn" onClick=${onCancelUpdate}>Cancel</button>
+										placeholder=${t("common:actions.newValue")} style="flex:1" autofocus />
+									<button type="submit" class="provider-btn">${t("common:actions.save")}</button>
+									<button type="button" class="provider-btn" onClick=${onCancelUpdate}>${t("common:actions.cancel")}</button>
 								</form>`
 								: html`<div style="flex:1;min-width:0;">
 									<div class="provider-item-name" style="font-family:var(--font-mono);font-size:.8rem;">
 										${v.key}
 										${
 											v.encrypted
-												? html`<span class="provider-item-badge configured" style="margin-left:6px;">Encrypted</span>`
-												: html`<span class="provider-item-badge muted" style="margin-left:6px;">Plaintext</span>`
+												? html`<span class="provider-item-badge configured" style="margin-left:6px;">${t("settings:environment.encrypted")}</span>`
+												: html`<span class="provider-item-badge muted" style="margin-left:6px;">${t("settings:environment.plaintext")}</span>`
 										}
 									</div>
 									<div style="font-size:.7rem;color:var(--muted);margin-top:2px;display:flex;gap:12px;">
@@ -691,21 +720,21 @@ function EnvironmentSection() {
 									</div>
 								</div>
 									<div style="display:flex;gap:4px;">
-										<button class="provider-btn provider-btn-sm" onClick=${() => onStartUpdate(v.id)}>Update</button>
+										<button class="provider-btn provider-btn-sm" onClick=${() => onStartUpdate(v.id)}>${t("common:actions.update")}</button>
 										<button class="provider-btn provider-btn-sm provider-btn-danger"
-											onClick=${() => onDelete(v.id)}>Delete</button>
+											onClick=${() => onDelete(v.id)}>${t("common:actions.delete")}</button>
 									</div>`
 						}
 					</div>`,
 					)}
 				</div>`
-						: html`<div class="text-xs text-[var(--muted)]" style="padding:12px 0;">No environment variables set.</div>`
+						: html`<div class="text-xs text-[var(--muted)]" style="padding:12px 0;">${t("settings:environment.noVariables")}</div>`
 				}
 			</div>
 
 			<!-- Add variable -->
 			<div style="max-width:600px;border-top:1px solid var(--border);padding-top:16px;">
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Add Variable</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:environment.addVariable")}</h3>
 				<form onSubmit=${onAdd}>
 					<div style="display:flex;gap:8px;flex-wrap:wrap;">
 						<input type="text" class="provider-key-input"
@@ -716,7 +745,7 @@ function EnvironmentSection() {
 							spellcheck="false"
 							value=${newKey}
 							onInput=${(e) => setNewKey(e.target.value)}
-							placeholder="KEY_NAME" style="flex:1;min-width:120px;font-family:var(--font-mono);font-size:.8rem;" />
+							placeholder=${t("settings:environment.keyPlaceholder")} style="flex:1;min-width:120px;font-family:var(--font-mono);font-size:.8rem;" />
 						<input type="password" class="provider-key-input"
 							name="env_value"
 							autocomplete="new-password"
@@ -725,9 +754,9 @@ function EnvironmentSection() {
 							spellcheck="false"
 							value=${newValue}
 							onInput=${(e) => setNewValue(e.target.value)}
-							placeholder="Value" style="flex:2;min-width:200px;" />
+							placeholder=${t("settings:environment.valuePlaceholder")} style="flex:2;min-width:200px;" />
 						<button type="submit" class="provider-btn" disabled=${saving || !newKey.trim()}>
-							${saving ? "Saving\u2026" : "Add"}
+							${saving ? t("common:actions.saving") : t("common:actions.add")}
 						</button>
 					</div>
 					${envMsg ? html`<div class="text-xs" style="margin-top:6px;color:var(--accent);">${envMsg}</div>` : null}
@@ -893,7 +922,7 @@ function SecuritySection() {
 
 				return r.json().then((data) => {
 					var hasRecoveryKey = !!data.recovery_key;
-					setPwMsg(hasPassword ? "Password changed." : "Password set.");
+					setPwMsg(hasPassword ? t("settings:security.passwordChanged") : t("settings:security.passwordSet"));
 					setCurPw("");
 					setNewPw("");
 					setConfirmPw("");
@@ -907,7 +936,7 @@ function SecuritySection() {
 					return reloadIfAuthNowRequiresLogin({ reload: !hasRecoveryKey }).then((requiresLoginOrReloaded) => {
 						if (hasRecoveryKey && requiresLoginOrReloaded) {
 							setPwAwaitingReauth(true);
-							setPwMsg("Password set. Save the recovery key, then continue to sign in.");
+							setPwMsg(t("settings:security.passwordSetWithRecovery"));
 							setPwSaving(false);
 							rerender();
 							return;
@@ -932,7 +961,7 @@ function SecuritySection() {
 	function onAddPasskey() {
 		setPkMsg(null);
 		if (/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname) || location.hostname.startsWith("[")) {
-			setPkMsg(`Passkeys require a domain name. Use localhost instead of ${location.hostname}`);
+			setPkMsg(t("settings:security.passkeyRequiresDomain", { hostname: location.hostname }));
 			rerender();
 			return;
 		}
@@ -984,7 +1013,7 @@ function SecuritySection() {
 								setSetupComplete(true);
 								setAuthDisabled(false);
 								return refreshPasskeyHostStatus().then(() => {
-									setPkMsg("Passkey added.");
+									setPkMsg(t("settings:security.passkeyAdded"));
 									notifyAuthStatusChanged();
 									rerender();
 								});
@@ -997,7 +1026,7 @@ function SecuritySection() {
 					});
 			})
 			.catch((err) => {
-				var msg = err.message || "Failed to add passkey";
+				var msg = err.message || t("settings:security.failedToAddPasskey");
 				if (requestedRpId) {
 					msg += ` (RPID: "${requestedRpId}", current origin: "${location.origin}")`;
 				}
@@ -1135,37 +1164,36 @@ function SecuritySection() {
 
 	if (authLoading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Authentication</h2>
-			<div class="text-xs text-[var(--muted)]">Loading\u2026</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:nav.authentication")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
 	if (authDisabled && !localhostOnly) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Authentication</h2>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:nav.authentication")}</h2>
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--error);background:color-mix(in srgb, var(--error) 5%, transparent);">
-				<strong style="color:var(--error);">Authentication is disabled</strong>
+				<strong style="color:var(--error);">${t("settings:security.authDisabled")}</strong>
 				<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-					Anyone with network access can control moltis and your computer. Set up a password to protect your instance.
+					${t("settings:security.authDisabledWarning")}
 				</p>
 				<button type="button" class="provider-btn" style="margin-top:10px;"
 					onClick=${() => {
 						window.location.assign("/onboarding");
-					}}>Set up authentication</button>
+					}}>${t("settings:security.setupAuth")}</button>
 			</div>
 		</div>`;
 	}
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Authentication</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:nav.authentication")}</h2>
 
 		${
 			authDisabled && localhostOnly
 				? html`<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--error);background:color-mix(in srgb, var(--error) 5%, transparent);">
-					<strong style="color:var(--error);">Authentication is disabled</strong>
+					<strong style="color:var(--error);">${t("settings:security.authDisabled")}</strong>
 					<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-						Localhost-only access is safe, but localhost bypass is active. Until you add a password or passkey, this browser has full access and Sign out has no effect.
-						Add credentials below to require login on localhost and before exposing Moltis to your network.
+						${t("settings:security.localhostBypassWarning")}
 					</p>
 				</div>`
 				: null
@@ -1174,41 +1202,40 @@ function SecuritySection() {
 		${
 			localhostOnly && !hasPassword && !hasPasskeys && !authDisabled
 				? html`<div class="alert-info-text max-w-form">
-					<span class="alert-label-info">Note: </span>
-					Localhost bypass is active. Until you add a password or passkey, this browser has full access and Sign out has no effect.
-					Add credentials to require login on localhost and before exposing Moltis to your network.
+					<span class="alert-label-info">${t("settings:security.note")}</span>
+					${t("settings:security.localhostBypassNote")}
 				</div>`
 				: null
 		}
 
 		<!-- Password -->
 		<div style="max-width:600px;">
-			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${hasPassword ? "Change Password" : "Set Password"}</h3>
+			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${hasPassword ? t("settings:security.changePassword") : t("settings:security.setPasswordTitle")}</h3>
 			<form onSubmit=${onChangePw}>
 				<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;">
 					${
 						hasPassword
 							? html`<div>
-								<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Current password</div>
+								<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:security.currentPassword")}</div>
 								<input type="password" class="provider-key-input" style="width:100%;" value=${curPw}
 									onInput=${(e) => setCurPw(e.target.value)} />
 							</div>`
 							: null
 					}
 					<div>
-						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${hasPassword ? "New password" : "Password"}</div>
+						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${hasPassword ? t("settings:security.newPassword") : t("settings:security.passwordLabel")}</div>
 						<input type="password" class="provider-key-input" style="width:100%;" value=${newPw}
-							onInput=${(e) => setNewPw(e.target.value)} placeholder="At least 8 characters" />
+							onInput=${(e) => setNewPw(e.target.value)} placeholder=${t("settings:security.passwordPlaceholder")} />
 					</div>
 					<div>
-						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Confirm ${hasPassword ? "new " : ""}password</div>
+						<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${hasPassword ? t("settings:security.confirmNewPassword") : t("settings:security.confirmPassword")}</div>
 						<input type="password" class="provider-key-input" style="width:100%;" value=${confirmPw}
 							onInput=${(e) => setConfirmPw(e.target.value)} />
 					</div>
 				</div>
 				<div style="display:flex;align-items:center;gap:8px;">
 					<button type="submit" class="provider-btn" disabled=${pwSaving}>
-						${pwSaving ? (hasPassword ? "Changing\u2026" : "Setting\u2026") : hasPassword ? "Change password" : "Set password"}
+						${pwSaving ? (hasPassword ? t("settings:security.changing") : t("settings:security.settingPassword")) : hasPassword ? t("settings:security.changePasswordBtn") : t("settings:security.setPasswordBtn")}
 					</button>
 					${pwMsg ? html`<span class="text-xs" style="color:var(--accent);">${pwMsg}</span>` : null}
 					${pwErr ? html`<span class="text-xs" style="color:var(--error);">${pwErr}</span>` : null}
@@ -1217,7 +1244,7 @@ function SecuritySection() {
 			${
 				pwRecoveryKey
 					? html`<div style="margin-top:12px;padding:12px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
-				<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Vault initialized \u2014 save this recovery key</div>
+				<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:security.vaultInitRecoveryKey")}</div>
 				<code class="select-all break-all" style="font-family:var(--font-mono);font-size:.8rem;color:var(--text-strong);display:block;line-height:1.5;">${pwRecoveryKey}</code>
 				<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
 					<button type="button" class="provider-btn provider-btn-secondary" onClick=${() => {
@@ -1229,18 +1256,18 @@ function SecuritySection() {
 							}, 2000);
 							rerender();
 						});
-					}}>${pwRecoveryCopied ? "Copied!" : "Copy"}</button>
+					}}>${pwRecoveryCopied ? t("common:actions.copied") : t("common:actions.copy")}</button>
 					${
 						pwAwaitingReauth
 							? html`<button type="button" class="provider-btn" onClick=${() => {
 									clearPasswordChangedRedirectDeferral();
 									window.location.assign("/login");
-								}}>Continue to sign in</button>`
+								}}>${t("settings:security.continueSignIn")}</button>`
 							: null
 					}
 				</div>
 				<div class="text-xs" style="color:var(--error);margin-top:8px;">
-					This key will not be shown again. You need it to unlock the vault if you forget your password.
+					${t("settings:security.recoveryKeySaveWarning")}
 				</div>
 			</div>`
 					: null
@@ -1249,19 +1276,22 @@ function SecuritySection() {
 
 		<!-- Passkeys -->
 		<div style="max-width:600px;border-top:1px solid var(--border);padding-top:16px;">
-			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Passkeys</h3>
-			${passkeyOrigins.length > 1 && html`<div class="text-xs text-[var(--muted)]" style="margin-bottom:8px;">Passkeys will work when visiting: ${passkeyOrigins.map((o) => o.replace(/^https?:\/\//, "")).join(", ")}</div>`}
+			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:security.passkeys")}</h3>
+			${
+				passkeyOrigins.length > 1 &&
+				html`<div class="text-xs text-[var(--muted)]" style="margin-bottom:8px;">${t("settings:security.passkeyOrigins", { origins: passkeyOrigins.map((o) => o.replace(/^https?:\/\//, "")).join(", ") })}</div>`
+			}
 			${
 				hasPasskeys && passkeyHostUpdateHosts.length > 0
 					? html`<div class="alert-warning-text max-w-form" style="margin-bottom:8px;">
-						<span class="alert-label-warning">Passkey update needed: </span>
-						New host detected (${passkeyHostUpdateHosts.join(", ")}). Sign in with your password on that host, then register a new passkey there.
+						<span class="alert-label-warning">${t("settings:security.passkeyUpdateNeeded")}</span>
+						${t("settings:security.newPasskeyHostDetected", { hosts: passkeyHostUpdateHosts.join(", ") })}
 					</div>`
 					: null
 			}
 			${
 				pkLoading
-					? html`<div class="text-xs text-[var(--muted)]">Loading\u2026</div>`
+					? html`<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>`
 					: html`
 				${
 					passkeys.length > 0
@@ -1277,29 +1307,29 @@ function SecuritySection() {
 									<input type="text" class="provider-key-input" value=${editingPkName}
 										onInput=${(e) => setEditingPkName(e.target.value)}
 										style="flex:1" autofocus />
-									<button type="submit" class="provider-btn provider-btn-sm">Save</button>
-									<button type="button" class="provider-btn provider-btn-sm provider-btn-secondary" onClick=${onCancelRename}>Cancel</button>
+									<button type="submit" class="provider-btn provider-btn-sm">${t("common:actions.save")}</button>
+									<button type="button" class="provider-btn provider-btn-sm provider-btn-secondary" onClick=${onCancelRename}>${t("common:actions.cancel")}</button>
 								</form>`
 								: html`<div style="flex:1;min-width:0;">
 									<div class="provider-item-name" style="font-size:.85rem;">${pk.name}</div>
 									<div style="font-size:.7rem;color:var(--muted);margin-top:2px;"><time datetime=${pk.created_at}>${pk.created_at}</time></div>
 								</div>
 								<div style="display:flex;gap:4px;">
-									<button class="provider-btn provider-btn-sm provider-btn-secondary" onClick=${() => onStartRename(pk.id, pk.name)}>Rename</button>
+									<button class="provider-btn provider-btn-sm provider-btn-secondary" onClick=${() => onStartRename(pk.id, pk.name)}>${t("common:actions.rename")}</button>
 									<button class="provider-btn provider-btn-sm provider-btn-danger"
-										onClick=${() => onRemovePasskey(pk.id)}>Remove</button>
+										onClick=${() => onRemovePasskey(pk.id)}>${t("common:actions.remove")}</button>
 								</div>`
 						}
 					</div>`,
 					)}
 				</div>`
-						: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0 12px;">No passkeys registered.</div>`
+						: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0 12px;">${t("settings:security.noPasskeys")}</div>`
 				}
 				<div style="display:flex;gap:8px;align-items:center;">
 					<input type="text" class="provider-key-input" value=${pkName}
 						onInput=${(e) => setPkName(e.target.value)}
-						placeholder="Passkey name (e.g. MacBook Touch ID)" style="flex:1" />
-					<button type="button" class="provider-btn" onClick=${onAddPasskey}>Add passkey</button>
+						placeholder=${t("settings:security.passkeyNamePlaceholder")} style="flex:1" />
+					<button type="button" class="provider-btn" onClick=${onAddPasskey}>${t("settings:security.addPasskey")}</button>
 				</div>
 				${pkMsg ? html`<div class="text-xs text-[var(--muted)]" style="margin-top:6px;">${pkMsg}</div>` : null}
 			`
@@ -1308,18 +1338,18 @@ function SecuritySection() {
 
 		<!-- API Keys -->
 		<div style="max-width:600px;border-top:1px solid var(--border);padding-top:16px;">
-			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:4px;">API Keys</h3>
+			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:4px;">${t("settings:security.apiKeys")}</h3>
 			<p class="text-xs text-[var(--muted)] leading-relaxed" style="margin:0 0 12px;">
-				API keys authenticate external tools and scripts connecting to moltis over the WebSocket protocol. Pass the key as the <code style="font-family:var(--font-mono);font-size:.75rem;">api_key</code> field in the <code style="font-family:var(--font-mono);font-size:.75rem;">auth</code> object of the <code style="font-family:var(--font-mono);font-size:.75rem;">connect</code> handshake.
+				${t("settings:security.apiKeysDescription")}
 			</p>
 			${
 				akLoading
-					? html`<div class="text-xs text-[var(--muted)]">Loading\u2026</div>`
+					? html`<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>`
 					: html`
 				${
 					akNew
 						? html`<div style="margin-bottom:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;">
-							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">Copy this key now. It won't be shown again.</div>
+							<div class="text-xs text-[var(--muted)]" style="margin-bottom:4px;">${t("settings:security.apiKeyCopyWarning")}</div>
 							<code style="font-family:var(--font-mono);font-size:.78rem;word-break:break-all;color:var(--text-strong);">${akNew}</code>
 						</div>`
 						: null
@@ -1334,21 +1364,21 @@ function SecuritySection() {
 							<div style="font-size:.7rem;color:var(--muted);margin-top:2px;display:flex;gap:12px;flex-wrap:wrap;">
 								<span style="font-family:var(--font-mono);">${ak.key_prefix}...</span>
 								<span><time datetime=${ak.created_at}>${ak.created_at}</time></span>
-								${ak.scopes ? html`<span style="color:var(--accent);">${ak.scopes.join(", ")}</span>` : html`<span style="color:var(--accent);">Full access</span>`}
+								${ak.scopes ? html`<span style="color:var(--accent);">${ak.scopes.join(", ")}</span>` : html`<span style="color:var(--accent);">${t("settings:security.fullAccess")}</span>`}
 							</div>
 						</div>
 						<button class="provider-btn provider-btn-danger"
-							onClick=${() => onRevokeApiKey(ak.id)}>Revoke</button>
+							onClick=${() => onRevokeApiKey(ak.id)}>${t("settings:security.revoke")}</button>
 					</div>`,
 					)}
 				</div>`
-						: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0 12px;">No API keys.</div>`
+						: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0 12px;">${t("settings:security.noApiKeys")}</div>`
 				}
 				<div style="display:flex;flex-direction:column;gap:10px;">
 					<div style="display:flex;gap:8px;align-items:center;">
 						<input type="text" class="provider-key-input" value=${akLabel}
 							onInput=${(e) => setAkLabel(e.target.value)}
-							placeholder="Key label (e.g. CLI tool)" style="flex:1" />
+							placeholder=${t("settings:security.apiKeyLabelPlaceholder")} style="flex:1" />
 					</div>
 					<div>
 						<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
@@ -1357,44 +1387,44 @@ function SecuritySection() {
 									setAkFullAccess(!akFullAccess);
 									rerender();
 								}} />
-							<span class="text-xs text-[var(--text)]">Full access (all permissions)</span>
+							<span class="text-xs text-[var(--text)]">${t("settings:security.fullAccessAll")}</span>
 						</label>
 					</div>
 					${
 						akFullAccess
 							? null
 							: html`<div style="padding-left:20px;display:flex;flex-direction:column;gap:6px;">
-							<div class="text-xs text-[var(--muted)]" style="margin-bottom:2px;">Select permissions:</div>
+							<div class="text-xs text-[var(--muted)]" style="margin-bottom:2px;">${t("settings:security.selectPermissions")}</div>
 							<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
 								<input type="checkbox" checked=${akScopes["operator.read"]}
 									onChange=${() => toggleScope("operator.read")} />
-								<span class="text-xs text-[var(--text)]">operator.read</span>
-								<span class="text-xs text-[var(--muted)]">\u2014 View data and status</span>
+								<span class="text-xs text-[var(--text)]">${t("settings:security.scopeOperatorRead")}</span>
+								<span class="text-xs text-[var(--muted)]">${t("settings:security.scopeOperatorReadDesc")}</span>
 							</label>
 							<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
 								<input type="checkbox" checked=${akScopes["operator.write"]}
 									onChange=${() => toggleScope("operator.write")} />
-								<span class="text-xs text-[var(--text)]">operator.write</span>
-								<span class="text-xs text-[var(--muted)]">\u2014 Create, update, delete</span>
+								<span class="text-xs text-[var(--text)]">${t("settings:security.scopeOperatorWrite")}</span>
+								<span class="text-xs text-[var(--muted)]">${t("settings:security.scopeOperatorWriteDesc")}</span>
 							</label>
 							<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
 								<input type="checkbox" checked=${akScopes["operator.approvals"]}
 									onChange=${() => toggleScope("operator.approvals")} />
-								<span class="text-xs text-[var(--text)]">operator.approvals</span>
-								<span class="text-xs text-[var(--muted)]">\u2014 Handle exec approvals</span>
+								<span class="text-xs text-[var(--text)]">${t("settings:security.scopeOperatorApprovals")}</span>
+								<span class="text-xs text-[var(--muted)]">${t("settings:security.scopeOperatorApprovalsDesc")}</span>
 							</label>
 							<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
 								<input type="checkbox" checked=${akScopes["operator.pairing"]}
 									onChange=${() => toggleScope("operator.pairing")} />
-								<span class="text-xs text-[var(--text)]">operator.pairing</span>
-								<span class="text-xs text-[var(--muted)]">\u2014 Device/node pairing</span>
+								<span class="text-xs text-[var(--text)]">${t("settings:security.scopeOperatorPairing")}</span>
+								<span class="text-xs text-[var(--muted)]">${t("settings:security.scopeOperatorPairingDesc")}</span>
 							</label>
 						</div>`
 					}
 					<div>
 						<button type="button" class="provider-btn" onClick=${onCreateApiKey}
 							disabled=${!(akLabel.trim() && (akFullAccess || Object.values(akScopes).some((v) => v)))}>
-							Generate key
+							${t("settings:security.generateKey")}
 						</button>
 					</div>
 				</div>
@@ -1406,27 +1436,25 @@ function SecuritySection() {
 		${
 			setupComplete
 				? html`<div style="max-width:600px;margin-top:8px;border-top:1px solid var(--error);padding-top:16px;">
-			<h3 class="text-sm font-medium" style="color:var(--error);margin-bottom:8px;">Danger Zone</h3>
+			<h3 class="text-sm font-medium" style="color:var(--error);margin-bottom:8px;">${t("settings:security.dangerZone")}</h3>
 			<div style="padding:12px 16px;border:1px solid var(--error);border-radius:6px;background:color-mix(in srgb, var(--error) 5%, transparent);">
-				<strong class="text-sm" style="color:var(--text-strong);">Remove all authentication</strong>
+				<strong class="text-sm" style="color:var(--text-strong);">${t("settings:security.removeAllAuth")}</strong>
 				<p class="text-xs text-[var(--muted)]" style="margin:6px 0 0;">
-					If you know what you're doing, you can fully disable authentication.
-					Anyone with network access will be able to access moltis and your computer.
-					This removes your password, all passkeys, all API keys, and all sessions.
+					${t("settings:security.removeAllAuthWarning")}
 				</p>
 				${
 					resetConfirm
 						? html`<div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-						<span class="text-xs" style="color:var(--error);">Are you sure? This cannot be undone.</span>
+						<span class="text-xs" style="color:var(--error);">${t("settings:security.removeAllAuthConfirm")}</span>
 						<button type="button" class="provider-btn provider-btn-danger" disabled=${resetBusy}
-							onClick=${onResetAuth}>${resetBusy ? "Removing\u2026" : "Yes, remove all auth"}</button>
+							onClick=${onResetAuth}>${resetBusy ? t("settings:security.removing") : t("settings:security.yesRemoveAllAuth")}</button>
 						<button type="button" class="provider-btn" onClick=${() => {
 							setResetConfirm(false);
 							rerender();
-						}}>Cancel</button>
+						}}>${t("common:actions.cancel")}</button>
 					</div>`
 						: html`<button type="button" class="provider-btn provider-btn-danger" style="margin-top:10px;"
-						onClick=${onResetAuth}>Remove all authentication</button>`
+						onClick=${onResetAuth}>${t("settings:security.removeAllAuth")}</button>`
 				}
 			</div>
 		</div>`
@@ -1481,7 +1509,7 @@ function VaultSection() {
 		})
 			.then((r) => {
 				if (r.ok) {
-					setMsg("Vault unlocked.");
+					setMsg(t("settings:security.vaultUnlocked"));
 					setUnlockPw("");
 					setRecoveryKey("");
 					refreshGon();
@@ -1500,37 +1528,37 @@ function VaultSection() {
 
 	if (!vaultStatus || vaultStatus === "disabled") {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Encryption</h2>
-			<p class="text-xs text-[var(--muted)]">Encryption at rest is not available in this build.</p>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:vault.title")}</h2>
+			<p class="text-xs text-[var(--muted)]">${t("settings:vault.notAvailable")}</p>
 		</div>`;
 	}
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Encryption</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:vault.title")}</h2>
 
 		<div style="max-width:600px;">
 			<div class="rounded border border-[var(--border)] bg-[var(--surface2)] p-3 mb-4">
 				<p class="text-xs text-[var(--muted)] leading-relaxed m-0 mb-1.5">
-					Your API keys and secrets are encrypted at rest using <strong class="text-[var(--text)]">XChaCha20-Poly1305</strong> AEAD with keys derived from your password via <strong class="text-[var(--text)]">Argon2id</strong>.
+					${t("settings:vault.overviewLine1")}
 				</p>
 				<p class="text-xs text-[var(--muted)] leading-relaxed m-0 mb-1.5">
-					The vault uses a two-layer key hierarchy: your password derives a Key Encryption Key (KEK) which unwraps a random 256-bit Data Encryption Key (DEK). Changing your password only re-wraps the DEK \u2014 all encrypted data stays intact. A recovery key (shown once at setup) provides emergency access if you forget your password.
+					${t("settings:vault.overviewLine2")}
 				</p>
 				<p class="text-xs text-[var(--muted)] leading-relaxed m-0">
-					The vault locks automatically when the server restarts and unlocks when you log in.
+					${t("settings:vault.overviewLine3")}
 				</p>
 			</div>
 
 			<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
 				<span class="provider-item-badge ${vaultStatus === "unsealed" ? "configured" : vaultStatus === "sealed" ? "warning" : "muted"}">
-					${vaultStatus === "unsealed" ? "Unlocked" : vaultStatus === "sealed" ? "Locked" : "Off"}
+					${vaultStatus === "unsealed" ? t("settings:vault.statusUnlocked") : vaultStatus === "sealed" ? t("settings:vault.statusLocked") : t("settings:vault.statusOff")}
 				</span>
 				<span class="text-xs text-[var(--muted)]">${
 					vaultStatus === "unsealed"
-						? "Your API keys and secrets are encrypted in the database. Everything is working."
+						? t("settings:security.encryptedWorking")
 						: vaultStatus === "sealed"
-							? "Log in or unlock below to access your encrypted keys."
-							: "Set a password in Authentication settings to start encrypting your stored keys."
+							? t("settings:security.loginOrUnlock")
+							: t("settings:security.setPasswordToStartEncrypting")
 				}</span>
 			</div>
 
@@ -1538,22 +1566,22 @@ function VaultSection() {
 				vaultStatus === "sealed"
 					? html`<div style="display:flex;flex-direction:column;gap:12px;">
 				<form onSubmit=${onUnlockPw} style="display:flex;flex-direction:column;gap:6px;">
-					<div class="text-xs text-[var(--muted)]">Unlock with password</div>
+					<div class="text-xs text-[var(--muted)]">${t("settings:vault.unlockWithPassword")}</div>
 					<div style="display:flex;gap:8px;align-items:center;">
-						<input type="password" class="provider-key-input" style="flex:1;" value=${unlockPw} onInput=${(e) => setUnlockPw(e.target.value)} placeholder="Your password" />
-						<button type="submit" class="provider-btn" disabled=${unlockingPw || !unlockPw.trim()}>${unlockingPw ? "Unlocking\u2026" : "Unlock"}</button>
+						<input type="password" class="provider-key-input" style="flex:1;" value=${unlockPw} onInput=${(e) => setUnlockPw(e.target.value)} placeholder=${t("settings:security.yourPassword")} />
+						<button type="submit" class="provider-btn" disabled=${unlockingPw || !unlockPw.trim()}>${unlockingPw ? t("settings:security.unlocking") : t("settings:vault.unlock")}</button>
 					</div>
 				</form>
 				<div style="display:flex;align-items:center;gap:8px;">
 					<div style="flex:1;border-top:1px solid var(--border);"></div>
-					<span class="text-xs text-[var(--muted)]">or</span>
+					<span class="text-xs text-[var(--muted)]">${t("settings:vault.or")}</span>
 					<div style="flex:1;border-top:1px solid var(--border);"></div>
 				</div>
 				<form onSubmit=${onUnlockRecovery} style="display:flex;flex-direction:column;gap:6px;">
-					<div class="text-xs text-[var(--muted)]">Unlock with recovery key</div>
+					<div class="text-xs text-[var(--muted)]">${t("settings:vault.unlockWithRecoveryKey")}</div>
 					<div style="display:flex;gap:8px;align-items:center;">
-						<input type="password" class="provider-key-input" style="flex:1;font-family:var(--font-mono);font-size:.78rem;" value=${recoveryKey} onInput=${(e) => setRecoveryKey(e.target.value)} placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX" />
-						<button type="submit" class="provider-btn" disabled=${unlockingRk || !recoveryKey.trim()}>${unlockingRk ? "Unlocking\u2026" : "Unlock"}</button>
+						<input type="password" class="provider-key-input" style="flex:1;font-family:var(--font-mono);font-size:.78rem;" value=${recoveryKey} onInput=${(e) => setRecoveryKey(e.target.value)} placeholder=${t("settings:vault.recoveryKeyPlaceholder")} />
+						<button type="submit" class="provider-btn" disabled=${unlockingRk || !recoveryKey.trim()}>${unlockingRk ? t("settings:security.unlocking") : t("settings:vault.unlock")}</button>
 					</div>
 				</form>
 				${msg ? html`<div class="text-xs" style="color:var(--accent);">${msg}</div>` : null}
@@ -1565,7 +1593,7 @@ function VaultSection() {
 			${
 				vaultStatus === "uninitialized"
 					? html`<div style="margin-top:4px;">
-				<a href="/settings/security" class="provider-btn provider-btn-secondary" style="font-size:.75rem;text-decoration:none;display:inline-block;">Set a password</a>
+				<a href="/settings/security" class="provider-btn provider-btn-secondary" style="font-size:.75rem;text-decoration:none;display:inline-block;">${t("settings:security.setPasswordBtn")}</a>
 			</div>`
 					: null
 			}
@@ -1612,7 +1640,7 @@ function OpenClawImportSection() {
 		sendRpc("openclaw.scan", {}).then((res) => {
 			if (cancelled) return;
 			if (res?.ok) setScan(res.payload);
-			else setError("Failed to scan OpenClaw installation");
+			else setError(t("settings:import.failedToScanInstallation"));
 			setImportLoading(false);
 			rerender();
 		});
@@ -1638,7 +1666,7 @@ function OpenClawImportSection() {
 				setResult(res.payload);
 				setDone(true);
 			} else {
-				setError(res?.error?.message || "Import failed");
+				setError(res?.error?.message || t("settings:import.importFailed"));
 			}
 			rerender();
 		});
@@ -1646,71 +1674,71 @@ function OpenClawImportSection() {
 
 	if (importLoading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">OpenClaw Import</h2>
-			<div class="text-xs text-[var(--muted)]">Scanning\u2026</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:import.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("settings:import.scanning")}</div>
 		</div>`;
 	}
 
 	if (!scan?.detected) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">OpenClaw Import</h2>
-			<div class="text-xs text-[var(--muted)]">No OpenClaw installation detected.</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:import.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("settings:import.notDetected")}</div>
 		</div>`;
 	}
 
 	var telegramAccounts = Number(scan.telegram_accounts) || 0;
 	var discordAccounts = Number(scan.discord_accounts) || 0;
 	var channelParts = [];
-	if (telegramAccounts > 0) channelParts.push(`${telegramAccounts} Telegram account(s)`);
-	if (discordAccounts > 0) channelParts.push(`${discordAccounts} Discord account(s)`);
+	if (telegramAccounts > 0) channelParts.push(t("settings:import.telegramAccounts", { count: telegramAccounts }));
+	if (discordAccounts > 0) channelParts.push(t("settings:import.discordAccounts", { count: discordAccounts }));
 	var channelDetail = channelParts.length > 0 ? channelParts.join(", ") : null;
 	var unsupportedChannels = (scan.unsupported_channels || []).filter(
 		(channel) => String(channel).toLowerCase() !== "discord",
 	);
 
 	var categories = [
-		{ key: "identity", label: "Identity", available: scan.identity_available },
-		{ key: "providers", label: "Providers", available: scan.providers_available },
-		{ key: "skills", label: "Skills", available: scan.skills_count > 0, detail: `${scan.skills_count} skill(s)` },
+		{ key: "identity", label: t("settings:nav.identity"), available: scan.identity_available },
+		{ key: "providers", label: t("settings:import.providers"), available: scan.providers_available },
+		{ key: "skills", label: t("settings:nav.skills"), available: scan.skills_count > 0, detail: t("settings:import.skillsCount", { count: scan.skills_count }) },
 		{
 			key: "memory",
-			label: "Memory",
+			label: t("settings:nav.memory"),
 			available: scan.memory_available,
-			detail: `${scan.memory_files_count} memory file(s)`,
+			detail: t("settings:import.memoryFiles", { count: scan.memory_files_count }),
 		},
 		{
 			key: "channels",
-			label: "Channels",
+			label: t("settings:nav.channels"),
 			available: scan.channels_available,
 			detail: channelDetail,
 		},
 		{
 			key: "sessions",
-			label: "Sessions",
+			label: t("settings:import.sessions"),
 			available: scan.sessions_count > 0,
-			detail: `${scan.sessions_count} session(s)`,
+			detail: t("settings:import.sessionsCount", { count: scan.sessions_count }),
 		},
 	];
 	var anySelected = categories.some((c) => c.available && selection[c.key]);
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">OpenClaw Import</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:import.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-			Import data from your OpenClaw installation at <code class="text-[var(--text)]">${scan.home_dir}</code>.
-			This is a read-only copy \u2014 your OpenClaw files will not be modified or removed.
-			You can keep using both side by side and re-import whenever you like.
+			${t("settings:import.descriptionPrefix")} <code class="text-[var(--text)]">${scan.home_dir}</code>.
+			${t("settings:import.descriptionReadOnly")}
+			${t("settings:import.descriptionReimport")}
 		</p>
 		${
 			error
 				? html`<div role="alert" class="alert-error-text whitespace-pre-line" style="max-width:600px;">
-			<span class="text-[var(--error)] font-medium">Error:</span> ${error}
+			<span class="text-[var(--error)] font-medium">${t("settings:import.errorLabel")}</span> ${error}
 		</div>`
 				: null
 		}
 			${
 				done && result
 					? html`<div class="flex flex-col gap-2" style="max-width:600px;">
-						<div class="text-sm font-medium text-[var(--ok)]">Import complete: ${(result.categories || []).reduce((sum, cat) => sum + (Number(cat.items_imported) || 0), 0)} item(s) imported.</div>
+						<div class="text-sm font-medium text-[var(--ok)]">${t("settings:import.importComplete", { count: (result.categories || []).reduce((sum, cat) => sum + (Number(cat.items_imported) || 0), 0) })}</div>
 						${
 							result.categories
 								? html`<div class="flex flex-col gap-1">
@@ -1728,7 +1756,7 @@ function OpenClawImportSection() {
 						setResult(null);
 						rerender();
 					}}>
-						Import Again
+						${t("settings:import.importAgain")}
 					</button>
 				</div>`
 					: html`<div class="flex flex-col gap-2" style="max-width:400px;">
@@ -1744,14 +1772,14 @@ function OpenClawImportSection() {
 							/>
 							<span>${cat.label}</span>
 							${cat.detail && cat.available ? html`<span class="text-xs text-[var(--muted)]">(${cat.detail})</span>` : null}
-							${cat.available ? null : html`<span class="text-xs text-[var(--muted)]">(not found)</span>`}
+							${cat.available ? null : html`<span class="text-xs text-[var(--muted)]">(${t("settings:import.notFound")})</span>`}
 						</label>`,
 					)}
 				</div>
 				${
 					unsupportedChannels.length > 0
 						? html`<p class="text-xs text-[var(--muted)]" style="max-width:600px;">
-							Unsupported channels (coming soon): ${unsupportedChannels.join(", ")}
+							${t("settings:import.unsupportedChannels", { channels: unsupportedChannels.join(", ") })}
 						</p>`
 						: null
 				}
@@ -1761,7 +1789,7 @@ function OpenClawImportSection() {
 					onClick=${doImport}
 					disabled=${!anySelected || importing}
 				>
-					${importing ? "Importing\u2026" : "Import Selected"}
+					${importing ? t("settings:import.importing") : t("settings:import.importSelected")}
 				</button>`
 			}
 	</div>`;
@@ -1792,13 +1820,13 @@ function GraphqlSection() {
 					setEnabled(res.payload?.enabled !== false);
 					setErr(null);
 				} else {
-					setErr(res?.error?.message || "Failed to load GraphQL config");
+					setErr(res?.error?.message || t("settings:graphql.failedToLoadConfig"));
 				}
 				setLoadingConfig(false);
 				rerender();
 			})
 			.catch((error) => {
-				setErr(error?.message || "Failed to load GraphQL config");
+				setErr(error?.message || t("settings:graphql.failedToLoadConfig"));
 				setLoadingConfig(false);
 				rerender();
 			});
@@ -1816,7 +1844,7 @@ function GraphqlSection() {
 
 	function onToggle(nextEnabled) {
 		if (!connected.value) {
-			setErr("WebSocket not connected");
+			setErr(t("settings:graphql.websocketNotConnected"));
 			rerender();
 			return;
 		}
@@ -1831,29 +1859,29 @@ function GraphqlSection() {
 				if (res?.ok) {
 					setEnabled(res.payload?.enabled !== false);
 					if (res.payload?.persisted === false) {
-						setMsg("GraphQL updated for this runtime, but failed to persist to config. It may revert on restart.");
+						setMsg(t("settings:graphql.updatedRuntimeNotPersisted"));
 					}
 				} else {
-					setErr(res?.error?.message || "Failed to update GraphQL setting");
+					setErr(res?.error?.message || t("settings:graphql.failedToUpdateSetting"));
 				}
 				rerender();
 			})
 			.catch((error) => {
 				setSaving(false);
-				setErr(error?.message || "Failed to update GraphQL setting");
+				setErr(error?.message || t("settings:graphql.failedToUpdateSetting"));
 				rerender();
 			});
 	}
 
 	if (!connected.value) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<div class="text-xs text-[var(--muted)]">Connecting…</div>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.connecting")}</div>
 		</div>`;
 	}
 
 	if (loadingConfig) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<div class="text-xs text-[var(--muted)]">Loading...</div>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
@@ -1861,16 +1889,16 @@ function GraphqlSection() {
 		<div style="max-width:900px;padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);">
 			<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
 				<div>
-					<div class="text-sm font-medium text-[var(--text-strong)]">GraphQL server</div>
+					<div class="text-sm font-medium text-[var(--text-strong)]">${t("settings:graphql.serverTitle")}</div>
 					${
 						enabled
 							? html`<div class="text-xs text-[var(--muted)]" style="margin-top:8px;">
 									<div>
-										HTTP endpoint:
+										${t("settings:graphql.httpEndpoint")}
 										<code>${httpEndpoint}</code>
 									</div>
 									<div style="margin-top:2px;">
-										WebSocket endpoint:
+										${t("settings:graphql.websocketEndpoint")}
 										<code>${wsEndpoint}</code>
 									</div>
 								</div>`
@@ -1888,7 +1916,7 @@ function GraphqlSection() {
 					<span class="toggle-slider"></span>
 				</label>
 			</div>
-			${saving ? html`<div class="text-xs text-[var(--muted)]" style="margin-top:8px;">Applying...</div>` : null}
+			${saving ? html`<div class="text-xs text-[var(--muted)]" style="margin-top:8px;">${t("settings:graphql.applying")}</div>` : null}
 			${msg ? html`<div class="text-xs text-[var(--ok)]" style="margin-top:8px;">${msg}</div>` : null}
 			${err ? html`<div class="text-xs text-[var(--error)]" style="margin-top:8px;">${err}</div>` : null}
 		</div>
@@ -1899,7 +1927,7 @@ function GraphqlSection() {
 					<iframe
 						src="/graphql"
 						class="h-full w-full border-0"
-						title="GraphiQL Playground"
+						title=${t("settings:graphql.playgroundTitle")}
 						allow="clipboard-write"
 					/>
 				</div>`
@@ -1936,7 +1964,7 @@ function ConfigSection() {
 						}
 					});
 				}
-				return r.json().catch(() => ({ error: "Invalid JSON response from server" }));
+				return r.json().catch(() => ({ error: t("settings:config.invalidJsonResponse") }));
 			})
 			.then((d) => {
 				if (d.error) {
@@ -1951,9 +1979,9 @@ function ConfigSection() {
 			})
 			.catch((fetchErr) => {
 				// Network error or other fetch failure
-				var errMsg = fetchErr.message || "Network error";
+				var errMsg = fetchErr.message || t("settings:config.networkError");
 				if (errMsg.includes("pattern")) {
-					errMsg = "Failed to connect to server. Please check if moltis is running.";
+					errMsg = t("settings:config.failedToConnect");
 				}
 				setErr(errMsg);
 				setConfigLoading(false);
@@ -1978,22 +2006,22 @@ function ConfigSection() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ toml }),
 		})
-			.then((r) => r.json().catch(() => ({ error: "Invalid JSON response" })))
+			.then((r) => r.json().catch(() => ({ error: t("settings:config.invalidJsonResponseShort") })))
 			.then((d) => {
 				setTesting(false);
 				if (d.valid) {
-					setMsg("Configuration is valid.");
+					setMsg(t("settings:config.configValid"));
 					setWarnings(d.warnings || []);
 				} else {
-					setErr(d.error || "Invalid configuration");
+					setErr(d.error || t("settings:config.configInvalid"));
 				}
 				rerender();
 			})
 			.catch((fetchErr) => {
 				setTesting(false);
-				var errMsg = fetchErr.message || "Network error";
+				var errMsg = fetchErr.message || t("settings:config.networkError");
 				if (errMsg.includes("pattern")) {
-					errMsg = "Failed to connect to server";
+					errMsg = t("settings:config.failedToConnectShort");
 				}
 				setErr(errMsg);
 				rerender();
@@ -2013,21 +2041,21 @@ function ConfigSection() {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ toml }),
 		})
-			.then((r) => r.json().catch(() => ({ error: "Invalid JSON response" })))
+			.then((r) => r.json().catch(() => ({ error: t("settings:config.invalidJsonResponseShort") })))
 			.then((d) => {
 				setSaving(false);
 				if (d.ok) {
-					setMsg("Configuration saved. Restart required for changes to take effect.");
+					setMsg(t("settings:config.configSaved"));
 				} else {
-					setErr(d.error || "Failed to save");
+					setErr(d.error || t("settings:identity.failedToSave"));
 				}
 				rerender();
 			})
 			.catch((fetchErr) => {
 				setSaving(false);
-				var errMsg = fetchErr.message || "Network error";
+				var errMsg = fetchErr.message || t("settings:config.networkError");
 				if (errMsg.includes("pattern")) {
-					errMsg = "Failed to connect to server";
+					errMsg = t("settings:config.failedToConnectShort");
 				}
 				setErr(errMsg);
 				rerender();
@@ -2036,7 +2064,7 @@ function ConfigSection() {
 
 	function onRestart() {
 		setRestarting(true);
-		setMsg("Restarting moltis...");
+		setMsg(t("settings:config.restartingMoltis"));
 		setErr(null);
 		rerender();
 
@@ -2080,7 +2108,7 @@ function ConfigSection() {
 						setTimeout(check, 1000);
 					} else {
 						setRestarting(false);
-						setErr("Server did not come back up. Check if moltis is running.");
+						setErr(t("settings:config.serverNotBack"));
 						rerender();
 					}
 				})
@@ -2089,7 +2117,7 @@ function ConfigSection() {
 						setTimeout(check, 1000);
 					} else {
 						setRestarting(false);
-						setErr("Server did not come back up. Check if moltis is running.");
+						setErr(t("settings:config.serverNotBack"));
 						rerender();
 					}
 				});
@@ -2107,9 +2135,7 @@ function ConfigSection() {
 
 	function onResetToTemplate() {
 		if (
-			!confirm(
-				"Replace current config with the default template?\n\nThis will show all available options with documentation. Your current values will be lost unless you copy them first.",
-			)
+			!confirm(t("settings:config.resetConfirm"))
 		) {
 			return;
 		}
@@ -2122,9 +2148,9 @@ function ConfigSection() {
 		fetch("/api/config/template")
 			.then((r) => {
 				if (!r.ok) {
-					return { error: `HTTP ${r.status}: Failed to load template` };
+					return { error: `HTTP ${r.status}: ${t("settings:config.failedToLoadTemplate")}` };
 				}
-				return r.json().catch(() => ({ error: "Invalid JSON response" }));
+				return r.json().catch(() => ({ error: t("settings:config.invalidJsonResponseShort") }));
 			})
 			.then((d) => {
 				setResettingTemplate(false);
@@ -2132,15 +2158,15 @@ function ConfigSection() {
 					setErr(d.error);
 				} else {
 					setToml(d.toml || "");
-					setMsg("Loaded default template with all options. Review and save when ready.");
+					setMsg(t("settings:config.templateLoaded"));
 				}
 				rerender();
 			})
 			.catch((fetchErr) => {
 				setResettingTemplate(false);
-				var errMsg = fetchErr.message || "Network error";
+				var errMsg = fetchErr.message || t("settings:config.networkError");
 				if (errMsg.includes("pattern")) {
-					errMsg = "Failed to connect to server";
+					errMsg = t("settings:config.failedToConnectShort");
 				}
 				setErr(errMsg);
 				rerender();
@@ -2149,23 +2175,22 @@ function ConfigSection() {
 
 	if (configLoading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Configuration</h2>
-			<div class="text-xs text-[var(--muted)]">Loading\u2026</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:config.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Configuration</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:config.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:700px;margin:0;">
-			Edit the full moltis configuration. This includes server, tools, LLM providers, auth, and all other settings.
-			Test your changes before saving. Changes require a restart to take effect.${" "}
+			${t("settings:config.description")} ${" "}
 			<a href="https://docs.moltis.org/configuration.html" target="_blank" rel="noopener"
-				style="color:var(--accent);text-decoration:underline;">View documentation \u2197</a>
+				style="color:var(--accent);text-decoration:underline;">${t("settings:config.viewDocs")}</a>
 		</p>
 		${
 			configPath
 				? html`<div class="text-xs text-[var(--muted)]" style="font-family:var(--font-mono);">
-			<span style="opacity:0.7;">File:</span> ${configPath}
+			<span style="opacity:0.7;">${t("settings:config.fileLabel")}</span> ${configPath}
 		</div>`
 				: null
 		}
@@ -2190,7 +2215,7 @@ function ConfigSection() {
 			${
 				warnings.length > 0
 					? html`<div style="margin-bottom:12px;padding:10px 12px;background:color-mix(in srgb, orange 10%, transparent);border:1px solid orange;border-radius:6px;">
-					<div class="text-xs font-medium" style="color:orange;margin-bottom:6px;">Warnings:</div>
+					<div class="text-xs font-medium" style="color:orange;margin-bottom:6px;">${t("settings:config.warnings")}</div>
 					<ul style="margin:0;padding-left:16px;">
 						${warnings.map((w) => html`<li class="text-xs text-[var(--muted)]" style="margin:4px 0;">${w}</li>`)}
 					</ul>
@@ -2200,20 +2225,20 @@ function ConfigSection() {
 
 			<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
 				<button type="button" class="provider-btn provider-btn-secondary" onClick=${onTest} disabled=${testing || saving || resettingTemplate || restarting}>
-					${testing ? "Testing\u2026" : "Test"}
+					${testing ? t("settings:config.testingBtn") : t("settings:config.testBtn")}
 				</button>
 				<button type="button" class="provider-btn provider-btn-secondary" onClick=${onReset} disabled=${saving || testing || resettingTemplate || restarting}>
-					Reload
+					${t("settings:config.reloadBtn")}
 				</button>
 				<button type="button" class="provider-btn provider-btn-secondary" onClick=${onResetToTemplate} disabled=${saving || testing || resettingTemplate || restarting}>
-					${resettingTemplate ? "Resetting\u2026" : "Reset to defaults"}
+					${resettingTemplate ? t("settings:config.resetting") : t("settings:config.resetToDefaults")}
 				</button>
 				<button type="button" class="provider-btn provider-btn-danger" onClick=${onRestart} disabled=${saving || testing || resettingTemplate || restarting}>
-					${restarting ? "Restarting\u2026" : "Restart"}
+					${restarting ? t("settings:config.restarting") : t("settings:config.restartBtn")}
 				</button>
 				<div style="flex:1;"></div>
 				<button type="submit" class="provider-btn" disabled=${saving || testing || resettingTemplate || restarting}>
-					${saving ? "Saving\u2026" : "Save"}
+					${saving ? t("settings:config.savingBtn") : t("settings:config.saveBtn")}
 				</button>
 			</div>
 
@@ -2222,7 +2247,7 @@ function ConfigSection() {
 			${
 				restarting
 					? html`<div class="text-xs text-[var(--muted)]" style="margin-top:8px;">
-						The page will reload automatically when the server is back up.
+						${t("settings:config.autoReloadHint")}
 					</div>`
 					: null
 			}
@@ -2230,8 +2255,7 @@ function ConfigSection() {
 
 		<div style="max-width:800px;margin-top:8px;padding-top:16px;border-top:1px solid var(--border);">
 			<p class="text-xs text-[var(--muted)] leading-relaxed">
-				<strong>Tip:</strong> Click "Load Template" to see all available configuration options with documentation.
-				This replaces the editor content with a fully documented template - copy your current values first if needed.
+				<strong>${t("settings:config.tipLabel")}</strong> ${t("settings:config.tipText")}
 			</p>
 		</div>
 	</div>`;
@@ -2285,7 +2309,7 @@ function TailscaleSection() {
 			.then((r) => {
 				var ct = r.headers.get("content-type") || "";
 				if (r.status === 404 || !ct.includes("application/json")) {
-					setTsError("Tailscale feature is not enabled. Rebuild with --features tailscale.");
+					setTsError(t("settings:tailscale.featureNotEnabled"));
 					setTsLoading(false);
 					rerender();
 					return null;
@@ -2383,7 +2407,12 @@ function TailscaleSection() {
 
 	function createModeBtn(m, currentMode) {
 		var btn = document.createElement("button");
-		btn.textContent = m;
+		var modeLabelMap = {
+			off: t("settings:tailscale.modeOff"),
+			serve: t("settings:tailscale.modeServe"),
+			funnel: t("settings:tailscale.modeFunnel"),
+		};
+		btn.textContent = modeLabelMap[m] || m;
 		btn.style.fontWeight = "500";
 		var active = currentMode === m && !configuring;
 		var base = "text-xs border px-3 py-1.5 rounded-md cursor-pointer transition-colors";
@@ -2418,7 +2447,7 @@ function TailscaleSection() {
 		var cfgMsg = section.querySelector("[data-ts-configuring]");
 		if (configuring && cfgMsg) {
 			cfgMsg.style.display = "";
-			cfgMsg.textContent = `Configuring tailscale ${configuringMode}\u2026 This can take up to 10 seconds.`;
+			cfgMsg.textContent = t("settings:tailscale.configuringMode", { mode: configuringMode });
 		}
 		container.appendChild(section);
 		var warn = cloneHidden("ts-funnel-security-warning");
@@ -2501,8 +2530,9 @@ function TailscaleSection() {
 		if (tsLoading) {
 			var loadEl = document.createElement("div");
 			loadEl.className = "text-xs text-[var(--muted)]";
-			loadEl.textContent = "Loading\u2026 this can take a few seconds.";
+			loadEl.textContent = t("settings:tailscale.loadingSlowHint");
 			container.appendChild(loadEl);
+			applySettingsTranslations();
 			return;
 		}
 		if (tsStatus?.installed) renderInstalledBar(container, tsStatus);
@@ -2510,17 +2540,17 @@ function TailscaleSection() {
 		if (tsWarning) renderTsWarning(container);
 		if (tsStatus?.installed === false) {
 			if (!tsError) renderNotInstalled(container);
+			applySettingsTranslations();
 			return;
 		}
 		renderInstalledState(container);
+		applySettingsTranslations();
 	});
 
 	return html`<div ref=${ref} class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Tailscale</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:tailscale.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed max-w-form" style="margin:0;">
-			Expose the gateway via Tailscale Serve (tailnet-only HTTPS) or Funnel
-			(public HTTPS). The gateway stays bound to localhost; Tailscale proxies
-			traffic to it.
+			${t("settings:tailscale.description")}
 		</p>
 	</div>`;
 }
@@ -2575,14 +2605,18 @@ function VoiceSection() {
 			.then((res) => {
 				setSavingProvider(null);
 				if (res?.ok) {
-					setVoiceMsg(`${provider.name} ${enabled ? "enabled" : "disabled"}.`);
+					setVoiceMsg(
+						enabled
+							? t("settings:voice.providerEnabled", { name: provider.name })
+							: t("settings:voice.providerDisabled", { name: provider.name }),
+					);
 					setTimeout(() => {
 						setVoiceMsg(null);
 						rerender();
 					}, 2000);
 					fetchVoiceStatus({ silent: true });
 				} else {
-					setVoiceErr(res?.error?.message || "Failed to toggle provider");
+					setVoiceErr(res?.error?.message || t("settings:voiceExtra.failedToToggleProvider"));
 				}
 				rerender();
 			})
@@ -2657,13 +2691,13 @@ function VoiceSection() {
 				} else {
 					setVoiceTestResults((prev) => ({
 						...prev,
-						[providerId]: { success: false, error: res?.error?.message || "TTS test failed" },
+						[providerId]: { success: false, error: res?.error?.message || t("settings:voice.ttsTestFailed") },
 					}));
 				}
 			} catch (err) {
 				setVoiceTestResults((prev) => ({
 					...prev,
-					[providerId]: { success: false, error: err.message || "TTS test failed" },
+					[providerId]: { success: false, error: err.message || t("settings:voice.ttsTestFailed") },
 				}));
 			}
 			setVoiceTesting(null);
@@ -2710,14 +2744,14 @@ function VoiceSection() {
 									...prev,
 									[providerId]: {
 										text: null,
-										error: sttRes.transcriptionError || sttRes.error || "STT test failed",
+										error: sttRes.transcriptionError || sttRes.error || t("settings:voice.sttTestFailed"),
 									},
 								}));
 							}
 						} else {
 							var errBody = await resp.text();
 							console.error("[STT] upload failed: status=%d body=%s", resp.status, errBody);
-							var errMsg = "STT test failed";
+							var errMsg = t("settings:voice.sttTestFailed");
 							try {
 								errMsg = JSON.parse(errBody)?.error || errMsg;
 							} catch (_e) {
@@ -2731,7 +2765,7 @@ function VoiceSection() {
 					} catch (fetchErr) {
 						setVoiceTestResults((prev) => ({
 							...prev,
-							[providerId]: { text: null, error: fetchErr.message || "STT test failed" },
+							[providerId]: { text: null, error: fetchErr.message || t("settings:voice.sttTestFailed") },
 						}));
 					}
 					setVoiceTesting(null);
@@ -2739,11 +2773,11 @@ function VoiceSection() {
 				};
 			} catch (err) {
 				if (err.name === "NotAllowedError") {
-					setVoiceErr("Microphone permission denied");
+					setVoiceErr(t("settings:voice.micDenied"));
 				} else if (err.name === "NotFoundError") {
-					setVoiceErr("No microphone found");
+					setVoiceErr(t("settings:voice.noMicFound"));
 				} else {
-					setVoiceErr(err.message || "STT test failed");
+					setVoiceErr(err.message || t("settings:voice.sttTestFailed"));
 				}
 				setVoiceTesting(null);
 			}
@@ -2753,15 +2787,15 @@ function VoiceSection() {
 
 	if (voiceLoading || !connected.value) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Voice</h2>
-			<div class="text-xs text-[var(--muted)]">${connected.value ? "Loading\u2026" : "Connecting\u2026"}</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:voice.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${connected.value ? t("common:status.loading") : t("common:status.connecting")}</div>
 		</div>`;
 	}
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Voice</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:voice.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-			Configure text-to-speech (TTS) and speech-to-text (STT) providers. STT lets you use the microphone button in chat to record voice input. TTS lets you hear responses as audio.
+			${t("settings:voice.description")}
 		</p>
 
 		${voiceMsg ? html`<div class="text-xs text-[var(--accent)]">${voiceMsg}</div>` : null}
@@ -2770,7 +2804,7 @@ function VoiceSection() {
 		<div style="max-width:700px;display:flex;flex-direction:column;gap:24px;">
 			<!-- STT Providers -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)] mb-3">Speech-to-Text (Voice Input)</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)] mb-3">${t("settings:voice.sttHeading")}</h3>
 				<div class="flex flex-col gap-2">
 					${allProviders.stt.map((prov) => {
 						var meta = prov;
@@ -2793,7 +2827,7 @@ function VoiceSection() {
 
 			<!-- TTS Providers -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)] mb-3">Text-to-Speech (Audio Responses)</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)] mb-3">${t("settings:voice.ttsHeading")}</h3>
 				<div class="flex flex-col gap-2">
 					${allProviders.tts.map((prov) => {
 						var meta = prov;
@@ -2832,20 +2866,24 @@ function VoiceSection() {
 function VoiceProviderRow({ provider, meta, type, saving, testState, testResult, onToggle, onConfigure, onTest }) {
 	var canEnable = provider.available;
 	var keySourceLabel =
-		provider.keySource === "env" ? "(from env)" : provider.keySource === "llm_provider" ? "(from LLM provider)" : "";
+		provider.keySource === "env"
+			? t("settings:voice.fromEnv")
+			: provider.keySource === "llm_provider"
+				? t("settings:voice.fromLlmProvider")
+				: "";
 	var showTestBtn = canEnable && provider.enabled;
 
 	// Determine button text based on test state
-	var buttonText = "Test";
+	var buttonText = t("common:actions.test");
 	var buttonDisabled = false;
 	if (testState) {
 		if (testState.phase === "recording") {
-			buttonText = "Stop";
+			buttonText = t("common:actions.stop");
 		} else if (testState.phase === "transcribing") {
-			buttonText = "Testing…";
+			buttonText = t("common:status.testing");
 			buttonDisabled = true;
 		} else {
-			buttonText = "Testing…";
+			buttonText = t("common:status.testing");
 			buttonDisabled = true;
 		}
 	}
@@ -2854,27 +2892,27 @@ function VoiceProviderRow({ provider, meta, type, saving, testState, testResult,
 		<div style="flex:1;display:flex;flex-direction:column;gap:2px;">
 			<div style="display:flex;align-items:center;gap:8px;">
 				<span class="text-sm text-[var(--text-strong)]">${meta.name}</span>
-				${provider.category === "local" ? html`<span class="provider-item-badge">local</span>` : null}
+				${provider.category === "local" ? html`<span class="provider-item-badge">${t("settings:voice.localBadge")}</span>` : null}
 				${keySourceLabel ? html`<span class="text-xs text-[var(--muted)]">${keySourceLabel}</span>` : null}
 			</div>
 			<span class="text-xs text-[var(--muted)]">${meta.description}</span>
-			${provider.settingsSummary ? html`<span class="text-xs text-[var(--muted)]">Voice: ${provider.settingsSummary}</span>` : null}
-			${provider.binaryPath ? html`<span class="text-xs text-[var(--muted)]">Found at: ${provider.binaryPath}</span>` : null}
+			${provider.settingsSummary ? html`<span class="text-xs text-[var(--muted)]">${t("settings:voice.voiceSummary", { summary: provider.settingsSummary })}</span>` : null}
+			${provider.binaryPath ? html`<span class="text-xs text-[var(--muted)]">${t("settings:voice.foundAt", { path: provider.binaryPath })}</span>` : null}
 			${!canEnable && provider.statusMessage ? html`<span class="text-xs text-[var(--muted)]">${provider.statusMessage}</span>` : null}
 			${
 				testState?.phase === "recording"
 					? html`<div class="voice-recording-hint">
 				<span class="voice-recording-dot"></span>
-				<span>Speak now, then click Stop when finished</span>
+				<span>${t("settings:voice.speakNow")}</span>
 			</div>`
 					: null
 			}
-			${testState?.phase === "transcribing" ? html`<span class="text-xs text-[var(--muted)]">Transcribing...</span>` : null}
-			${testState?.phase === "testing" && type === "tts" ? html`<span class="text-xs text-[var(--muted)]">Playing audio...</span>` : null}
+			${testState?.phase === "transcribing" ? html`<span class="text-xs text-[var(--muted)]">${t("settings:voice.transcribing")}</span>` : null}
+			${testState?.phase === "testing" && type === "tts" ? html`<span class="text-xs text-[var(--muted)]">${t("settings:voice.playingAudio")}</span>` : null}
 			${
 				testResult?.text
 					? html`<div class="voice-transcription-result">
-				<span class="voice-transcription-label">Transcribed:</span>
+				<span class="voice-transcription-label">${t("settings:voice.transcribed")}</span>
 				<span class="voice-transcription-text">"${testResult.text}"</span>
 			</div>`
 					: null
@@ -2883,7 +2921,7 @@ function VoiceProviderRow({ provider, meta, type, saving, testState, testResult,
 				testResult?.success === true
 					? html`<div class="voice-success-result">
 				<span class="icon icon-md icon-check-circle"></span>
-				<span>Audio played successfully</span>
+				<span>${t("settings:voice.audioSuccess")}</span>
 			</div>`
 					: null
 			}
@@ -2898,7 +2936,7 @@ function VoiceProviderRow({ provider, meta, type, saving, testState, testResult,
 		</div>
 		<div style="display:flex;align-items:center;gap:8px;">
 			<button class="provider-btn provider-btn-secondary provider-btn-sm" onClick=${onConfigure}>
-				Configure
+				${t("common:actions.configure")}
 			</button>
 			${
 				showTestBtn
@@ -2906,7 +2944,7 @@ function VoiceProviderRow({ provider, meta, type, saving, testState, testResult,
 						class="provider-btn provider-btn-secondary provider-btn-sm"
 						onClick=${onTest}
 						disabled=${buttonDisabled}
-						title=${type === "tts" ? "Test voice output" : "Test voice input"}>
+						title=${type === "tts" ? t("settings:voice.testVoiceOutput") : t("settings:voice.testVoiceInput")}>
 						${buttonText}
 					</button>`
 					: null
@@ -2921,7 +2959,7 @@ function VoiceProviderRow({ provider, meta, type, saving, testState, testResult,
 						<span class="toggle-slider"></span>
 					</label>`
 					: provider.category === "local"
-						? html`<span class="text-xs text-[var(--muted)]">Install required</span>`
+						? html`<span class="text-xs text-[var(--muted)]">${t("settings:voice.installRequired")}</span>`
 						: null
 			}
 		</div>
@@ -2980,7 +3018,7 @@ function LocalProviderInstructions({ providerId, voxtralReqs }) {
 			} else {
 				var loadingEl = document.createElement("div");
 				loadingEl.className = "text-xs text-[var(--muted)] mb-3";
-				loadingEl.textContent = "Checking system requirements\u2026";
+				loadingEl.textContent = t("settings:voice.checkingRequirements");
 				reqsContainer.appendChild(loadingEl);
 			}
 		}
@@ -3024,7 +3062,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 		var hasApiKey = apiKey.trim().length > 0;
 		var hasSettings = supportsTtsVoiceSettings && (voiceValue.trim() || modelValue.trim() || languageCodeValue.trim());
 		if (!(hasApiKey || hasSettings)) {
-			setError("Provide an API key or at least one voice setting.");
+			setError(t("settings:voice.provideKeyOrSetting"));
 			return;
 		}
 		setError("");
@@ -3053,7 +3091,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 					setApiKey("");
 					onSaved();
 				} else {
-					setError(res?.error?.message || "Failed to save key");
+					setError(res?.error?.message || t("settings:voice.failedToSaveKey"));
 				}
 			})
 			.catch((err) => {
@@ -3097,7 +3135,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 				}
 			})
 			.catch(() => {
-				setElevenlabsCatalog({ voices: [], models: [], warning: "Failed to fetch ElevenLabs voice catalog." });
+				setElevenlabsCatalog({ voices: [], models: [], warning: t("settings:voice.failedToFetchVoices") });
 			})
 			.finally(() => {
 				setElevenlabsCatalogLoading(false);
@@ -3114,29 +3152,29 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 	if (selectedProvider && providerMeta) {
 		// Cloud provider - show API key form
 		if (providerMeta.category === "cloud") {
-			return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title="Add ${providerMeta.name}">
+			return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title=${t("settings:voice.addProvider", { name: providerMeta.name })}>
 				<div class="channel-form">
 					<div class="text-sm text-[var(--text-strong)]">${providerMeta.name}</div>
 					<div class="text-xs text-[var(--muted)]" style="margin-bottom:12px;">${providerMeta.description}</div>
 
-					<label class="text-xs text-[var(--muted)]">API Key</label>
+					<label class="text-xs text-[var(--muted)]">${t("settings:voice.apiKeyLabel")}</label>
 					<input type="password" class="provider-key-input" style="width:100%;"
 						value=${apiKey} onInput=${(e) => setApiKey(e.target.value)}
-						placeholder=${providerMeta.keyPlaceholder || "Leave blank to keep existing key"} />
+						placeholder=${providerMeta.keyPlaceholder || t("settings:voice.keepExistingPlaceholder")} />
 					<div class="text-xs text-[var(--muted)]">
-						Get your API key at <a href=${providerMeta.keyUrl} target="_blank" rel="noopener" class="hover:underline text-[var(--accent)]">${providerMeta.keyUrlLabel}</a>
+						${t("settings:voice.getApiKeyAtPrefix")} <a href=${providerMeta.keyUrl} target="_blank" rel="noopener" class="hover:underline text-[var(--accent)]">${providerMeta.keyUrlLabel}</a>
 					</div>
 
 					${
 						supportsTtsVoiceSettings
 							? html`<div class="flex flex-col gap-2">
-					<label class="text-xs text-[var(--muted)]">Voice</label>
-					${isElevenLabsProvider && elevenlabsCatalogLoading ? html`<div class="text-xs text-[var(--muted)]">Loading ElevenLabs voices...</div>` : null}
+					<label class="text-xs text-[var(--muted)]">${t("settings:voice.voiceFieldLabel")}</label>
+					${isElevenLabsProvider && elevenlabsCatalogLoading ? html`<div class="text-xs text-[var(--muted)]">${t("settings:voice.loadingVoices")}</div>` : null}
 					${isElevenLabsProvider && elevenlabsCatalog.warning ? html`<div class="text-xs text-[var(--muted)]">${elevenlabsCatalog.warning}</div>` : null}
 					${
 						isElevenLabsProvider && elevenlabsCatalog.voices.length > 0
 							? html`<select class="provider-key-input" style="width:100%;" onChange=${(e) => setVoiceValue(e.target.value)}>
-						<option value="">Pick a voice from your account...</option>
+						<option value="">${t("settings:voice.pickVoice")}</option>
 						${elevenlabsCatalog.voices.map((v) => html`<option value=${v.id}>${v.name} (${v.id})</option>`)}
 					</select>`
 							: null
@@ -3144,7 +3182,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 					<input type="text" class="provider-key-input" style="width:100%;"
 						value=${voiceValue} onInput=${(e) => setVoiceValue(e.target.value)}
 						list=${isElevenLabsProvider ? "elevenlabs-voice-options" : undefined}
-						placeholder="voice id / name (optional)" />
+						placeholder=${t("settings:voice.voiceIdPlaceholder")} />
 					${
 						isElevenLabsProvider
 							? html`<datalist id="elevenlabs-voice-options">
@@ -3153,11 +3191,11 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 							: null
 					}
 
-					<label class="text-xs text-[var(--muted)]">Model</label>
+					<label class="text-xs text-[var(--muted)]">${t("settings:voice.modelFieldLabel")}</label>
 					${
 						isElevenLabsProvider && elevenlabsCatalog.models.length > 0
 							? html`<select class="provider-key-input" style="width:100%;" onChange=${(e) => setModelValue(e.target.value)}>
-						<option value="">Pick a model...</option>
+						<option value="">${t("settings:voice.pickModel")}</option>
 						${elevenlabsCatalog.models.map((m) => html`<option value=${m.id}>${m.name} (${m.id})</option>`)}
 					</select>`
 							: null
@@ -3165,7 +3203,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 					<input type="text" class="provider-key-input" style="width:100%;"
 						value=${modelValue} onInput=${(e) => setModelValue(e.target.value)}
 						list=${isElevenLabsProvider ? "elevenlabs-model-options" : undefined}
-						placeholder="model (optional)" />
+						placeholder=${t("settings:voice.modelPlaceholder")} />
 					${
 						isElevenLabsProvider
 							? html`<datalist id="elevenlabs-model-options">
@@ -3177,10 +3215,10 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 					${
 						selectedProvider === "google" || selectedProvider === "google-tts"
 							? html`<div class="flex flex-col gap-2">
-							<label class="text-xs text-[var(--muted)]">Language Code</label>
+							<label class="text-xs text-[var(--muted)]">${t("settings:voice.languageCode")}</label>
 							<input type="text" class="provider-key-input" style="width:100%;"
 								value=${languageCodeValue} onInput=${(e) => setLanguageCodeValue(e.target.value)}
-								placeholder="en-US (optional)" />
+								placeholder=${t("settings:voice.languageCodePlaceholder")} />
 						</div>`
 							: null
 					}
@@ -3197,9 +3235,9 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 							voiceSelectedProvider.value = null;
 							setApiKey("");
 							setError("");
-						}}>Back</button>
+						}}>${t("common:actions.back")}</button>
 						<button class="provider-btn" disabled=${saving} onClick=${onSaveKey}>
-							${saving ? "Saving\u2026" : "Save"}
+							${saving ? t("common:actions.saving") : t("common:actions.save")}
 						</button>
 					</div>
 				</div>
@@ -3208,7 +3246,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 
 		// Local provider - show setup instructions
 		if (providerMeta.category === "local") {
-			return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title="Add ${providerMeta.name}">
+			return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title=${t("settings:voice.addProvider", { name: providerMeta.name })}>
 				<div class="channel-form">
 					<div class="text-sm text-[var(--text-strong)]">${providerMeta.name}</div>
 					<div class="text-xs text-[var(--muted)]" style="margin-bottom:12px;">${providerMeta.description}</div>
@@ -3216,7 +3254,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 					<div style="display:flex;gap:8px;margin-top:12px;">
 						<button class="provider-btn provider-btn-secondary" onClick=${() => {
 							voiceSelectedProvider.value = null;
-						}}>Back</button>
+						}}>${t("common:actions.back")}</button>
 					</div>
 				</div>
 			</${Modal}>`;
@@ -3224,13 +3262,13 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 	}
 
 	// Show provider selection list
-	return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title="Add Voice Provider">
+	return html`<${Modal} show=${voiceShowAddModal.value} onClose=${onClose} title=${t("settings:voice.addVoiceProvider")}>
 		<div class="channel-form" style="gap:16px;">
 			${
 				sttCloud.length > 0
 					? html`
 				<div>
-					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Speech-to-Text (Cloud)</h4>
+					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">${t("settings:voice.sttCloud")}</h4>
 					<div style="display:flex;flex-direction:column;gap:6px;">
 						${sttCloud.map(
 							(p) => html`
@@ -3256,7 +3294,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 				sttLocal.length > 0
 					? html`
 				<div>
-					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Speech-to-Text (Local)</h4>
+					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">${t("settings:voice.sttLocal")}</h4>
 					<div style="display:flex;flex-direction:column;gap:6px;">
 						${sttLocal.map(
 							(p) => html`
@@ -3282,7 +3320,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 				ttsProviders.length > 0
 					? html`
 				<div>
-					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Text-to-Speech</h4>
+					<h4 class="text-xs font-medium text-[var(--muted)]" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">${t("settings:voice.ttsCategory")}</h4>
 					<div style="display:flex;flex-direction:column;gap:6px;">
 						${ttsProviders.map(
 							(p) => html`
@@ -3308,7 +3346,7 @@ function AddVoiceProviderModal({ unconfiguredProviders, voxtralReqs, onSaved }) 
 				unconfiguredProviders.length === 0
 					? html`
 				<div class="text-sm text-[var(--muted)]" style="text-align:center;padding:20px 0;">
-					All available providers are already configured.
+					${t("settings:voice.allProvidersConfigured")}
 				</div>
 			`
 					: null
@@ -3383,7 +3421,7 @@ function MemorySection() {
 					rerender();
 				}, 2000);
 			} else {
-				setError(res?.error?.message || "Failed to save");
+				setError(res?.error?.message || t("settings:memory.failedToSave"));
 			}
 			rerender();
 		});
@@ -3391,8 +3429,8 @@ function MemorySection() {
 
 	if (memLoading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Memory</h2>
-			<div class="text-xs text-[var(--muted)]">Loading\u2026</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:memory.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
@@ -3400,10 +3438,9 @@ function MemorySection() {
 	var qmdAvailable = qmdStatus?.available === true;
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Memory</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:memory.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed max-w-form" style="margin:0;">
-			Configure how the agent stores and retrieves long-term memory. Memory enables the agent
-			to recall past conversations, notes, and context across sessions.
+			${t("settings:memory.description")}
 		</p>
 
 		<!-- Status -->
@@ -3411,23 +3448,23 @@ function MemorySection() {
 			memStatus
 				? html`
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Status</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:memory.statusHeading")}</h3>
 				<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;font-size:.8rem;">
 					<div>
-						<span class="text-[var(--muted)]">Files:</span>
+						<span class="text-[var(--muted)]">${t("settings:memory.files")}</span>
 						<span class="text-[var(--text)]" style="margin-left:6px;">${memStatus.total_files || 0}</span>
 					</div>
 					<div>
-						<span class="text-[var(--muted)]">Chunks:</span>
+						<span class="text-[var(--muted)]">${t("settings:memory.chunks")}</span>
 						<span class="text-[var(--text)]" style="margin-left:6px;">${memStatus.total_chunks || 0}</span>
 					</div>
 					<div>
-						<span class="text-[var(--muted)]">Model:</span>
-						<span class="text-[var(--text)]" style="margin-left:6px;font-family:var(--font-mono);font-size:.75rem;">${memStatus.embedding_model || "none"}</span>
+						<span class="text-[var(--muted)]">${t("settings:memory.model")}</span>
+						<span class="text-[var(--text)]" style="margin-left:6px;font-family:var(--font-mono);font-size:.75rem;">${memStatus.embedding_model || t("settings:memory.modelNone")}</span>
 					</div>
 					<div>
-						<span class="text-[var(--muted)]">DB Size:</span>
-						<span class="text-[var(--text)]" style="margin-left:6px;">${memStatus.db_size_display || "0 B"}</span>
+						<span class="text-[var(--muted)]">${t("settings:memory.dbSize")}</span>
+						<span class="text-[var(--text)]" style="margin-left:6px;">${memStatus.db_size_display || t("settings:memory.dbSizeEmpty")}</span>
 					</div>
 				</div>
 			</div>
@@ -3439,53 +3476,53 @@ function MemorySection() {
 		<form onSubmit=${onSave} style="max-width:600px;display:flex;flex-direction:column;gap:16px;">
 			<!-- Backend selection -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Backend</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:memory.backendHeading")}</h3>
 
 				<!-- Comparison table -->
 				<div style="margin-bottom:12px;padding:12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);font-size:.75rem;">
 					<table style="width:100%;border-collapse:collapse;">
 						<thead>
 							<tr style="border-bottom:1px solid var(--border);">
-								<th style="text-align:left;padding:4px 8px 8px 0;color:var(--muted);font-weight:500;">Feature</th>
-								<th style="text-align:center;padding:4px 8px 8px;color:var(--muted);font-weight:500;">Built-in</th>
-								<th style="text-align:center;padding:4px 8px 8px;color:var(--muted);font-weight:500;">QMD</th>
+								<th style="text-align:left;padding:4px 8px 8px 0;color:var(--muted);font-weight:500;">${t("settings:memory.feature")}</th>
+								<th style="text-align:center;padding:4px 8px 8px;color:var(--muted);font-weight:500;">${t("settings:memory.builtIn")}</th>
+								<th style="text-align:center;padding:4px 8px 8px;color:var(--muted);font-weight:500;">${t("settings:memory.qmd")}</th>
 							</tr>
 						</thead>
 						<tbody>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">Search type</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">FTS5 + vector</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">BM25 + vector + LLM</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.searchType")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.builtInSearchType")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.qmdSearchType")}</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">External dependency</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--accent);">None</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">Node.js/Bun</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.externalDependency")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--accent);">${t("settings:memory.noDependency")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.nodejsBun")}</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">Embedding cache</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.embeddingCache")}</td>
 								<td style="padding:6px 8px;text-align:center;color:var(--accent);">\u2713</td>
 								<td style="padding:6px 8px;text-align:center;color:var(--muted);">\u2717</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">OpenAI batch API</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--accent);">\u2713 (50% cheaper)</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.openAiBatch")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--accent);">${t("settings:memory.openAiBatchDiscount")}</td>
 								<td style="padding:6px 8px;text-align:center;color:var(--muted);">\u2717</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">Provider fallback</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.providerFallback")}</td>
 								<td style="padding:6px 8px;text-align:center;color:var(--accent);">\u2713</td>
 								<td style="padding:6px 8px;text-align:center;color:var(--muted);">\u2717</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">LLM reranking</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">Optional</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--accent);">Built-in</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.llmReranking")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.optional")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--accent);">${t("settings:memory.builtInLabel")}</td>
 							</tr>
 							<tr>
-								<td style="padding:6px 8px 6px 0;color:var(--text);">Best for</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">Most users</td>
-								<td style="padding:6px 8px;text-align:center;color:var(--muted);">Power users</td>
+								<td style="padding:6px 8px 6px 0;color:var(--text);">${t("settings:memory.bestFor")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.mostUsers")}</td>
+								<td style="padding:6px 8px;text-align:center;color:var(--muted);">${t("settings:memory.powerUsers")}</td>
 							</tr>
 						</tbody>
 					</table>
@@ -3498,7 +3535,7 @@ function MemorySection() {
 							setBackend("builtin");
 							rerender();
 						}}>
-						Built-in (Recommended)
+						${t("settings:memory.builtInRecommended")}
 					</button>
 					<button type="button"
 						class="provider-btn ${backend === "qmd" ? "" : "provider-btn-secondary"}"
@@ -3516,7 +3553,7 @@ function MemorySection() {
 						? null
 						: html`
 					<div class="text-xs text-[var(--error)]" style="margin-top:8px;">
-						QMD feature is not enabled. Rebuild moltis with <code style="font-family:var(--font-mono);font-size:.7rem;">--features qmd</code>
+						${t("settings:memory.qmdNotEnabled")}
 					</div>
 				`
 				}
@@ -3525,29 +3562,29 @@ function MemorySection() {
 					backend === "qmd"
 						? html`
 					<div style="margin-top:12px;padding:12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);">
-						<h4 class="text-xs font-medium text-[var(--text-strong)]" style="margin:0 0 8px;">QMD Status</h4>
+						<h4 class="text-xs font-medium text-[var(--text-strong)]" style="margin:0 0 8px;">${t("settings:memory.qmdStatus")}</h4>
 						${
 							qmdAvailable
 								? html`
 							<div class="text-xs" style="color:var(--accent);display:flex;align-items:center;gap:6px;">
-								<span>\u2713</span> QMD is installed ${qmdStatus?.version ? html`<span class="text-[var(--muted)]">(${qmdStatus.version})</span>` : null}
+								${t("settings:memory.qmdInstalled")} ${qmdStatus?.version ? html`<span class="text-[var(--muted)]">(${qmdStatus.version})</span>` : null}
 							</div>
 						`
 								: html`
 							<div class="text-xs" style="color:var(--error);margin-bottom:8px;">
-								\u2717 QMD is not installed or not found in PATH
+								${t("settings:memory.qmdNotInstalled")}
 							</div>
 							<div class="text-xs text-[var(--muted)]" style="line-height:1.6;">
-								<strong style="color:var(--text);">Installation:</strong><br/>
+								<strong style="color:var(--text);">${t("settings:memory.installation")}</strong><br/>
 									<code style="font-family:var(--font-mono);font-size:.7rem;background:var(--surface);padding:2px 4px;border-radius:3px;">npm install -g @tobilu/qmd</code>
-									<span style="margin:0 4px;">or</span>
+									<span style="margin:0 4px;">${t("settings:memory.or")}</span>
 									<code style="font-family:var(--font-mono);font-size:.7rem;background:var(--surface);padding:2px 4px;border-radius:3px;">bun install -g @tobilu/qmd</code>
 								<br/><br/>
-								Then start the QMD daemon:
+								${t("settings:memory.thenStartDaemon")}
 								<code style="display:block;margin-top:4px;font-family:var(--font-mono);font-size:.7rem;background:var(--surface);padding:2px 4px;border-radius:3px;">qmd daemon</code>
 								<br/>
 									<a href="https://github.com/tobi/qmd" target="_blank" rel="noopener"
-										style="color:var(--accent);">View documentation \u2192</a>
+										style="color:var(--accent);">${t("settings:memory.viewDocumentation")}</a>
 							</div>
 						`
 						}
@@ -3559,18 +3596,18 @@ function MemorySection() {
 
 			<!-- Citations -->
 			<div>
-				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">Citations</h3>
+				<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">${t("settings:memory.citations")}</h3>
 				<p class="text-xs text-[var(--muted)]" style="margin:0 0 8px;">
-					Include source file and line number with search results to help track where information comes from.
+					${t("settings:memory.citationsDescription")}
 				</p>
 				<select class="provider-key-input" style="width:auto;min-width:150px;"
 					value=${citations} onChange=${(e) => {
 						setCitations(e.target.value);
 						rerender();
 					}}>
-					<option value="auto">Auto (multi-file only)</option>
-					<option value="on">Always</option>
-					<option value="off">Never</option>
+					<option value="auto">${t("settings:memory.citationsAuto")}</option>
+					<option value="on">${t("settings:memory.citationsAlways")}</option>
+					<option value="off">${t("settings:memory.citationsNever")}</option>
 				</select>
 			</div>
 
@@ -3583,9 +3620,9 @@ function MemorySection() {
 							rerender();
 						}} />
 					<div>
-						<span class="text-sm font-medium text-[var(--text-strong)]">LLM Reranking</span>
+						<span class="text-sm font-medium text-[var(--text-strong)]">${t("settings:memory.llmRerankingLabel")}</span>
 						<p class="text-xs text-[var(--muted)]" style="margin:2px 0 0;">
-							Use the LLM to rerank search results for better relevance (slower but more accurate).
+							${t("settings:memory.llmRerankingDescription")}
 						</p>
 					</div>
 				</label>
@@ -3600,9 +3637,9 @@ function MemorySection() {
 							rerender();
 						}} />
 					<div>
-						<span class="text-sm font-medium text-[var(--text-strong)]">Session Export</span>
+						<span class="text-sm font-medium text-[var(--text-strong)]">${t("settings:memory.sessionExport")}</span>
 						<p class="text-xs text-[var(--muted)]" style="margin:2px 0 0;">
-							Export session transcripts to memory for cross-run recall of past conversations.
+							${t("settings:memory.sessionExportDescription")}
 						</p>
 					</div>
 				</label>
@@ -3610,9 +3647,9 @@ function MemorySection() {
 
 			<div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--border);">
 				<button type="submit" class="provider-btn" disabled=${saving}>
-					${saving ? "Saving\u2026" : "Save"}
+					${saving ? t("common:actions.saving") : t("common:actions.save")}
 				</button>
-				${saved ? html`<span class="text-xs" style="color:var(--accent);">Saved</span>` : null}
+				${saved ? html`<span class="text-xs" style="color:var(--accent);">${t("common:actions.saved")}</span>` : null}
 				${error ? html`<span class="text-xs" style="color:var(--error);">${error}</span>` : null}
 			</div>
 		</form>
@@ -3661,7 +3698,7 @@ function NotificationsSection() {
 	async function onRemoveSubscription(endpoint) {
 		var result = await push.removeSubscription(endpoint);
 		if (!result.success) {
-			setError(result.error || "Failed to remove subscription");
+			setError(result.error || t("settings:notifications.failedToRemoveSubscription"));
 			rerender();
 		}
 		// The WebSocket event will trigger refreshStatus automatically
@@ -3687,7 +3724,7 @@ function NotificationsSection() {
 			setSubscribed(!subscribed);
 			if (!subscribed) setPermission("granted");
 		} else {
-			setError(result.error || (subscribed ? "Failed to unsubscribe" : "Failed to subscribe"));
+			setError(result.error || (subscribed ? t("settings:notifications.failedToUnsubscribe") : t("settings:notifications.failedToSubscribe")));
 		}
 
 		setToggling(false);
@@ -3696,20 +3733,20 @@ function NotificationsSection() {
 
 	if (isLoading) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Notifications</h2>
-			<div class="text-xs text-[var(--muted)]">Loading…</div>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:notifications.title")}</h2>
+			<div class="text-xs text-[var(--muted)]">${t("common:status.loading")}</div>
 		</div>`;
 	}
 
 	if (!supported) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Notifications</h2>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:notifications.title")}</h2>
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface);">
 				<p class="text-sm text-[var(--text)]" style="margin:0;">
-					Push notifications are not supported in this browser.
+					${t("settings:notifications.notSupported")}
 				</p>
 				<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-					Try using Safari, Chrome, or Firefox on a device that supports web push.
+					${t("settings:notifications.trySupportedBrowser")}
 				</p>
 			</div>
 		</div>`;
@@ -3717,13 +3754,13 @@ function NotificationsSection() {
 
 	if (serverStatus === null) {
 		return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-			<h2 class="text-lg font-medium text-[var(--text-strong)]">Notifications</h2>
+			<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:notifications.title")}</h2>
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface);">
 				<p class="text-sm text-[var(--text)]" style="margin:0;">
-					Push notifications are not configured on the server.
+					${t("settings:notifications.notConfigured")}
 				</p>
 				<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-					The server was built without the <code style="font-family:var(--font-mono);font-size:.75rem;">push-notifications</code> feature.
+					${t("settings:notifications.featureNotBuilt")}
 				</p>
 			</div>
 		</div>`;
@@ -3734,25 +3771,25 @@ function NotificationsSection() {
 	var needsInstall = !standalone && /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
 	return html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-4 overflow-y-auto">
-		<h2 class="text-lg font-medium text-[var(--text-strong)]">Notifications</h2>
+		<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("settings:notifications.title")}</h2>
 		<p class="text-xs text-[var(--muted)] leading-relaxed" style="max-width:600px;margin:0;">
-			Receive push notifications when the agent completes a task or needs your attention.
+			${t("settings:notifications.description")}
 		</p>
 
 		<!-- Push notifications toggle -->
 		<div style="max-width:600px;">
 			<div class="provider-item" style="margin-bottom:0;">
 				<div style="flex:1;min-width:0;">
-					<div class="provider-item-name" style="font-size:.9rem;">Push Notifications</div>
+					<div class="provider-item-name" style="font-size:.9rem;">${t("settings:notifications.pushNotifications")}</div>
 					<div style="font-size:.75rem;color:var(--muted);margin-top:2px;">
 						${
 							needsInstall
-								? "Add this app to your Dock to enable notifications."
+								? t("settings:notifications.addToDock")
 								: subscribed
-									? "You will receive notifications on this device."
+									? t("settings:notifications.willReceive")
 									: permission === "denied"
-										? "Notifications are blocked. Enable them in browser settings."
-										: "Enable to receive notifications on this device."
+										? t("settings:notifications.blocked")
+										: t("settings:notifications.enableHint")
 						}
 					</div>
 				</div>
@@ -3761,7 +3798,7 @@ function NotificationsSection() {
 					onClick=${onToggle}
 					disabled=${toggling || permission === "denied" || needsInstall}
 				>
-					${toggling ? "…" : subscribed ? "Disable" : "Enable"}
+					${toggling ? t("settings:notifications.toggling") : subscribed ? t("common:actions.disable") : t("common:actions.enable")}
 				</button>
 			</div>
 			${error ? html`<div class="text-xs" style="margin-top:8px;color:var(--error);">${error}</div>` : null}
@@ -3773,10 +3810,10 @@ function NotificationsSection() {
 				? html`
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--border);background:var(--surface);">
 				<p class="text-sm text-[var(--text)]" style="margin:0;font-weight:500;">
-					Installation required
+					${t("settings:notifications.installRequired")}
 				</p>
 				<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-					On Safari, push notifications are only available for installed apps. Add moltis to your Dock using <strong>File → Add to Dock</strong> (or Share → Add to Dock on iOS), then open it from there.
+					${t("settings:notifications.installRequiredSafari")}
 				</p>
 			</div>
 		`
@@ -3789,10 +3826,10 @@ function NotificationsSection() {
 				? html`
 			<div style="max-width:600px;padding:12px 16px;border-radius:6px;border:1px solid var(--error);background:color-mix(in srgb, var(--error) 5%, transparent);">
 				<p class="text-sm" style="color:var(--error);margin:0;font-weight:500;">
-					Notifications are blocked
+					${t("settings:notifications.notificationsBlocked")}
 				</p>
 				<p class="text-xs text-[var(--muted)]" style="margin:8px 0 0;">
-					You previously blocked notifications for this site. To enable them, you'll need to update your browser's site settings and allow notifications for this origin.
+					${t("settings:notifications.blockedExplanation")}
 				</p>
 			</div>
 		`
@@ -3802,7 +3839,7 @@ function NotificationsSection() {
 		<!-- Subscribed devices -->
 		<div style="max-width:600px;border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
 			<h3 class="text-sm font-medium text-[var(--text-strong)]" style="margin-bottom:8px;">
-				Subscribed Devices (${serverStatus?.subscription_count || 0})
+				${t("settings:notifications.subscribedDevices", { count: serverStatus?.subscription_count || 0 })}
 			</h3>
 			${
 				serverStatus?.subscriptions?.length > 0
@@ -3820,12 +3857,12 @@ function NotificationsSection() {
 							class="provider-btn provider-btn-danger"
 							onClick=${() => onRemoveSubscription(sub.endpoint)}
 						>
-							Remove
+							${t("common:actions.remove")}
 						</button>
 					</div>`,
 					)}
 				</div>`
-					: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0;">No devices subscribed yet.</div>`
+					: html`<div class="text-xs text-[var(--muted)]" style="padding:4px 0;">${t("settings:notifications.noDevicesYet")}</div>`
 			}
 		</div>
 	</div>`;
@@ -3879,6 +3916,9 @@ function SettingsPage() {
 	useEffect(() => {
 		fetchIdentity();
 	}, []);
+	useEffect(() => {
+		applySettingsTranslations();
+	});
 
 	var section = activeSection.value;
 	var subPath = activeSubPath.value;
@@ -3886,7 +3926,7 @@ function SettingsPage() {
 	var mobile = isMobileViewport();
 	var showSidebar = !mobile || mobileSidebarVisible.value;
 	var showContent = !(mobile && showSidebar);
-	var mobileSectionsLabel = showSidebar ? "Hide Sections" : "Sections";
+	var mobileSectionsLabel = showSidebar ? t("settings:nav.hideSections") : t("settings:nav.sections");
 
 	return html`<div class="settings-layout ${mobile && !showSidebar ? "settings-layout-mobile-collapsed" : ""}">
 		${showSidebar ? html`<${SettingsSidebar} />` : null}
@@ -3902,7 +3942,7 @@ function SettingsPage() {
 									onClick=${() => navigate(routes.chats)}
 								>
 									<span class="icon icon-chat"></span>
-									<span>Back to Chats</span>
+									<span>${t("settings:nav.backToChats")}</span>
 								</button>
 								<button
 									class="settings-mobile-menu-btn"
@@ -3934,9 +3974,9 @@ function SettingsPage() {
 								? gon.get("voice_enabled") === true
 									? html`<${VoiceSection} />`
 									: html`<div class="flex-1 flex flex-col min-w-0 p-4 gap-3 overflow-y-auto">
-										<h2 class="text-base font-medium text-[var(--text-strong)]">Voice</h2>
+										<h2 class="text-base font-medium text-[var(--text-strong)]">${t("settings:voice.title")}</h2>
 										<div class="text-xs text-[var(--muted)] max-w-form">
-											Voice settings are unavailable in this build. Start a binary with the voice feature enabled to configure STT/TTS providers.
+											${t("settings:voice.unavailableInBuild")}
 										</div>
 									</div>`
 								: null
@@ -3971,6 +4011,7 @@ registerPrefix(
 			history.replaceState(null, "", settingsPath(section));
 		}
 		render(html`<${SettingsPage} />`, container);
+		applySettingsTranslations();
 		fetchIdentity();
 	},
 	() => {

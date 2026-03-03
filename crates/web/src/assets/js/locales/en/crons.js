@@ -48,10 +48,23 @@ export default {
 		// Sandbox
 		sandboxTitle: "Sandbox",
 		sandboxDescription: "Run heartbeat commands in an isolated container.",
+		deliveryTitle: "Delivery",
+		deliveryDescription: "Send heartbeat replies to a channel/chat destination.",
+		deliverToChannel: "Deliver to channel",
+		channelAccountLabel: "Channel Account",
+		channelAccountPlaceholder: "my-bot",
+		chatIdLabel: "Chat ID",
+		chatIdPlaceholder: "123456789",
+		deliveryRequirementsHint:
+			"Required when delivery is enabled. Account is your configured channel account id, chat ID is the destination recipient/group id.",
 		enableSandbox: "Enable sandbox",
 		sandboxImageLabel: "Sandbox Image",
 		sandboxImagePlaceholder: "Default image",
 		sandboxSearchPlaceholder: "Search images\u2026",
+		sandboxDefault: "sandbox (default)",
+		searchChannelsPlaceholder: "Search channels\u2026",
+		selectChannelAccount: "Select channel account",
+		telegramChatIdPlaceholder: "Telegram chat_id",
 		// Recent Runs
 		recentRunsTitle: "Recent Runs",
 		noRunsYet: "No runs yet.",

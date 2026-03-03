@@ -5,6 +5,7 @@ import { html } from "htm/preact";
 import { render } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { sendRpc } from "./helpers.js";
+import { t } from "./i18n.js";
 import * as S from "./state.js";
 import { ComboSelect } from "./ui.js";
 
@@ -104,7 +105,7 @@ function Toolbar() {
 	}
 
 	return html`<div class="logs-toolbar">
-		<input ref=${domainRef} type="text" placeholder="Filter domain\u2026"
+		<input ref=${domainRef} type="text" placeholder=${t("networkAudit:toolbar.filterDomain")}
 			class="logs-input" style="width:180px;"
 			onInput=${debouncedDomain} />
 		<div class="logs-level-filter">
@@ -114,23 +115,23 @@ function Toolbar() {
 				onChange=${(v) => {
 					protocolFilter.value = v;
 				}}
-				placeholder="All protocols"
+				placeholder=${t("networkAudit:toolbar.allProtocols")}
 				searchable=${false}
 			/>
 		</div>
 		<div class="logs-level-filter">
 			<${ComboSelect}
 				options=${[
-					{ value: "allowed", label: "Allowed" },
-					{ value: "denied", label: "Denied" },
-					{ value: "approved_by_user", label: "Approved" },
-					{ value: "timeout", label: "Timeout" },
+					{ value: "allowed", label: t("networkAudit:actions.allowed") },
+					{ value: "denied", label: t("networkAudit:actions.denied") },
+					{ value: "approved_by_user", label: t("networkAudit:actions.approved") },
+					{ value: "timeout", label: t("networkAudit:actions.timeout") },
 				]}
 				value=${actionFilter.value}
 				onChange=${(v) => {
 					actionFilter.value = v;
 				}}
-				placeholder="All actions"
+				placeholder=${t("networkAudit:toolbar.allActions")}
 				searchable=${false}
 			/>
 		</div>
@@ -138,14 +139,14 @@ function Toolbar() {
 			paused.value = !paused.value;
 		}}
 			style=${paused.value ? "border-color:var(--warn);" : ""}>
-			${paused.value ? "Resume" : "Pause"}
+			${paused.value ? t("networkAudit:toolbar.resume") : t("networkAudit:toolbar.pause")}
 		</button>
 		<button class="logs-btn" onClick=${() => {
 			var area = document.getElementById("networkAuditArea");
 			if (area) area.textContent = "";
 			entryCount.value = 0;
-		}}>Clear</button>
-		<span class="logs-count">${entryCount.value} entries</span>
+		}}>${t("networkAudit:toolbar.clear")}</button>
+		<span class="logs-count">${entryCount.value} ${t("networkAudit:toolbar.entries")}</span>
 	</div>`;
 }
 

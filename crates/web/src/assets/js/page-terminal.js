@@ -1,6 +1,7 @@
 // Settings > Terminal (host shell via PTY + xterm.js over WebSocket)
 
 import { localizedApiErrorMessage } from "./helpers.js";
+import { t } from "./i18n.js";
 
 var _container = null;
 var resizeObserver = null;
@@ -175,7 +176,7 @@ function normalizeWindowPayload(payloadWindow) {
 }
 
 function windowLabel(windowInfo) {
-	var title = windowInfo.name?.trim() ? windowInfo.name.trim() : "shell";
+	var title = windowInfo.name?.trim() ? windowInfo.name.trim() : t("terminal:shell");
 	return `${windowInfo.index}: ${title}`;
 }
 
@@ -185,14 +186,14 @@ function renderWindowTabs() {
 	if (!tmuxPersistenceEnabled) {
 		var unsupported = document.createElement("span");
 		unsupported.className = "terminal-tab-empty";
-		unsupported.textContent = "tmux unavailable";
+		unsupported.textContent = t("terminal:tmuxUnavailable");
 		tabsEl.appendChild(unsupported);
 		return;
 	}
 	if (!terminalWindows.length) {
 		var empty = document.createElement("span");
 		empty.className = "terminal-tab-empty";
-		empty.textContent = "No tmux windows";
+		empty.textContent = t("terminal:noTmuxWindows");
 		tabsEl.appendChild(empty);
 		return;
 	}
@@ -201,7 +202,7 @@ function renderWindowTabs() {
 		tab.type = "button";
 		tab.className = "terminal-tab";
 		if (windowInfo.id === activeWindowId) tab.classList.add("active");
-		tab.title = `Attach ${windowLabel(windowInfo)}`;
+		tab.title = t("terminal:attachWindow", { window: windowLabel(windowInfo) });
 		tab.textContent = windowLabel(windowInfo);
 		tab.addEventListener("click", () => {
 			onWindowTabClick(windowInfo.id);
@@ -252,7 +253,7 @@ async function fetchTerminalWindows() {
 		payload = {};
 	}
 	if (!response.ok) {
-		throw new Error(localizedApiErrorMessage(payload, "Failed to list tmux windows"));
+		throw new Error(localizedApiErrorMessage(payload, t("terminal:statusFailedListWindows")));
 	}
 	return payload;
 }
@@ -273,7 +274,7 @@ async function refreshTerminalWindows(options) {
 		}
 	} catch (err) {
 		if (!silent) {
-			setStatus(err?.message || "Failed to refresh terminal windows", "error");
+			setStatus(err?.message || t("terminal:statusFailedRefreshWindows"), "error");
 		}
 	}
 }
@@ -292,7 +293,7 @@ function requestWindowSwitch(windowId) {
 	pendingWindowId = windowId;
 	activeWindowId = windowId;
 	renderWindowTabs();
-	setStatus("Switching tmux window...", "ok");
+	setStatus(t("terminal:statusSwitchingWindow"), "ok");
 	if (
 		socket &&
 		socket.readyState === WebSocket.OPEN &&
@@ -309,7 +310,7 @@ function handleActiveWindowEvent(payload) {
 	activeWindowId = windowId;
 	pendingWindowId = null;
 	renderWindowTabs();
-	setStatus("Switched tmux window.", "ok");
+	setStatus(t("terminal:statusSwitchedWindow"), "ok");
 	startWindowsRefreshLoop();
 	kickResizeSettleLoop();
 	if (xterm) xterm.focus();
@@ -330,7 +331,7 @@ async function createTerminalWindow() {
 	if (!(tmuxPersistenceEnabled && terminalAvailable) || creatingWindow) return;
 	creatingWindow = true;
 	setWindowControlsEnabled();
-	setStatus("Creating tmux window...", "ok");
+	setStatus(t("terminal:statusCreatingWindow"), "ok");
 	try {
 		var response = await fetch("/api/terminal/windows", {
 			method: "POST",
@@ -347,7 +348,7 @@ async function createTerminalWindow() {
 			payload = {};
 		}
 		if (!response.ok) {
-			throw new Error(localizedApiErrorMessage(payload, "Failed to create tmux window"));
+			throw new Error(localizedApiErrorMessage(payload, t("terminal:statusFailedCreateWindow")));
 		}
 		var createdWindowId = payload?.window?.id || payload?.windowId || null;
 		if (Array.isArray(payload?.windows)) {
@@ -366,9 +367,9 @@ async function createTerminalWindow() {
 			if (xterm) xterm.reset();
 			connectTerminalSocket();
 		}
-		setStatus("Created tmux window.", "ok");
+		setStatus(t("terminal:statusCreatedWindow"), "ok");
 	} catch (err) {
-		setStatus(err?.message || "Failed to create tmux window", "error");
+		setStatus(err?.message || t("terminal:statusFailedCreateWindow"), "error");
 	} finally {
 		creatingWindow = false;
 		setWindowControlsEnabled();
@@ -524,7 +525,7 @@ async function initXterm() {
 	if (!terminalEl) return;
 	await ensureXtermModules();
 	if (!(TerminalCtor && FitAddonCtor)) {
-		throw new Error("xterm failed to load");
+		throw new Error(t("terminal:statusFailedInit"));
 	}
 
 	xterm = new TerminalCtor({
@@ -694,7 +695,9 @@ function applyReadyPayload(payload) {
 		installCommandEl.textContent = tmuxInstallCommand;
 	}
 	if (installTmuxBtn) {
-		installTmuxBtn.textContent = firstTimeOffer ? "Run install command (first time)" : "Run install command";
+		installTmuxBtn.textContent = firstTimeOffer
+			? t("terminal:runInstallCommandFirst")
+			: t("terminal:runInstallCommand");
 	}
 	setInstallActionsVisible(shouldOfferInstall);
 
@@ -702,32 +705,30 @@ function applyReadyPayload(payload) {
 		if (terminalAvailable) {
 			var user = payload.user || "unknown";
 			if (persistenceEnabled) {
-				metaEl.textContent = `Persistent tmux session, user ${user}`;
+				metaEl.textContent = t("terminal:metaPersistent", { user: user });
 			} else {
-				metaEl.textContent = `Ephemeral host shell, user ${user}`;
+				metaEl.textContent = t("terminal:metaEphemeral", { user: user });
 			}
 		} else {
-			metaEl.textContent = "Host shell unavailable";
+			metaEl.textContent = t("terminal:metaUnavailable");
 		}
 	}
 
 	if (hintEl) {
 		if (!terminalAvailable) {
-			hintEl.textContent = "Unable to open host shell.";
+			hintEl.textContent = t("terminal:hintUnavailable");
 		} else if (persistenceEnabled) {
-			hintEl.textContent =
-				"Interactive host shell with persistent tmux session. Click inside terminal and type commands directly.";
+			hintEl.textContent = t("terminal:hintPersistent");
 		} else if (persistenceAvailable) {
-			hintEl.textContent =
-				"Interactive host shell (ephemeral). Enable tmux persistence from terminal settings when available.";
+			hintEl.textContent = t("terminal:hintEphemeralWithSetting");
 		} else if (installCommand) {
 			if (firstTimeOffer) {
-				hintEl.textContent = "First connection tip: run the install command once to enable persistent tmux sessions.";
+				hintEl.textContent = t("terminal:hintFirstInstall");
 			} else {
-				hintEl.textContent = `Interactive host shell (ephemeral). Install tmux for persistence: ${installCommand}`;
+				hintEl.textContent = t("terminal:hintEphemeralWithCommand", { command: installCommand });
 			}
 		} else {
-			hintEl.textContent = "Interactive host shell (ephemeral). Install tmux to persist sessions across reconnects.";
+			hintEl.textContent = t("terminal:hintEphemeral");
 		}
 	}
 
@@ -741,11 +742,11 @@ function applyReadyPayload(payload) {
 		kickResizeSettleLoop();
 		updateSizeIndicator(xterm?.cols || 0, xterm?.rows || 0);
 		if (persistenceEnabled) {
-			setStatus("Connected to host shell with persistent tmux session.", "ok");
+			setStatus(t("terminal:statusConnectedPersistent"), "ok");
 			startWindowsRefreshLoop();
 			void refreshTerminalWindows({ preferredWindowId: activeWindowId, silent: true });
 		} else {
-			setStatus("Connected to host shell (ephemeral session).", "ok");
+			setStatus(t("terminal:statusConnectedEphemeral"), "ok");
 			clearWindowsRefreshTimer();
 		}
 		flushInputQueue();
@@ -753,7 +754,7 @@ function applyReadyPayload(payload) {
 	} else {
 		clearWindowsRefreshTimer();
 		updateSizeIndicator(0, 0);
-		setStatus("Failed to open host shell.", "error");
+		setStatus(t("terminal:statusFailedOpenHostShell"), "error");
 	}
 }
 
@@ -780,7 +781,7 @@ function handleTerminalMessage(payload) {
 			setStatus(payload.text || "", payload.level || "");
 			break;
 		case "error":
-			setStatus(payload.error || "Terminal error", "error");
+			setStatus(payload.error || t("terminal:statusTerminalError"), "error");
 			break;
 		case "pong":
 			break;
@@ -791,7 +792,7 @@ function handleTerminalMessage(payload) {
 
 function connectTerminalSocket() {
 	if (typeof WebSocket === "undefined") {
-		setStatus("WebSocket not supported in this browser", "error");
+		setStatus(t("terminal:statusWebsocketUnsupported"), "error");
 		return;
 	}
 
@@ -808,10 +809,10 @@ function connectTerminalSocket() {
 		wsUrl += `?window=${encodeURIComponent(targetWindowId)}`;
 	}
 	socket = new WebSocket(wsUrl);
-	setStatus("Connecting terminal websocket...");
+	setStatus(t("terminal:statusConnectingWs"));
 
 	socket.onopen = () => {
-		setStatus("Terminal websocket connected.", "ok");
+		setStatus(t("terminal:statusWsConnected"), "ok");
 	};
 
 	socket.onmessage = (event) => {
@@ -835,7 +836,7 @@ function connectTerminalSocket() {
 		clearWindowsRefreshTimer();
 		setWindowControlsEnabled();
 		if (shuttingDown) return;
-		setStatus("Terminal disconnected. Reconnecting...", "error");
+		setStatus(t("terminal:statusDisconnectedReconnecting"), "error");
 		scheduleReconnect();
 	};
 }
@@ -874,10 +875,10 @@ function bindEvents() {
 		installTmuxBtn.addEventListener("click", () => {
 			if (!(terminalAvailable && tmuxInstallCommand)) return;
 			if (!sendSocketMessage({ type: "input", data: `${tmuxInstallCommand}\n` })) {
-				setStatus("Failed to queue install command.", "error");
+				setStatus(t("terminal:statusFailedQueueInstall"), "error");
 				return;
 			}
-			setStatus(`Queued install command: ${tmuxInstallCommand}`, "ok");
+			setStatus(t("terminal:statusQueuedInstall", { command: tmuxInstallCommand }), "ok");
 			if (xterm) xterm.focus();
 		});
 	}
@@ -886,14 +887,14 @@ function bindEvents() {
 		copyInstallBtn.addEventListener("click", async () => {
 			if (!tmuxInstallCommand) return;
 			if (!navigator.clipboard?.writeText) {
-				setStatus("Clipboard API unavailable in this browser.", "error");
+				setStatus(t("terminal:statusClipboardUnavailable"), "error");
 				return;
 			}
 			try {
 				await navigator.clipboard.writeText(tmuxInstallCommand);
-				setStatus("Install command copied to clipboard.", "ok");
+				setStatus(t("terminal:statusInstallCopied"), "ok");
 			} catch {
-				setStatus("Failed to copy install command.", "error");
+				setStatus(t("terminal:statusFailedCopyInstall"), "error");
 			}
 		});
 	}
@@ -909,29 +910,29 @@ export async function initTerminal(container) {
 		<div class="terminal-page">
 			<div class="terminal-toolbar">
 				<div class="terminal-heading">
-					<h2 class="text-lg font-medium text-[var(--text-strong)]">Terminal</h2>
+					<h2 class="text-lg font-medium text-[var(--text-strong)]">${t("terminal:title")}</h2>
 					<div id="terminalMeta" class="terminal-meta"></div>
 				</div>
 				<div class="terminal-actions">
-					<div id="terminalSize" class="terminal-size" title="Terminal size (columns \u00d7 rows)">\u2014\u00d7\u2014</div>
-					<button id="terminalCtrlC" class="logs-btn" type="button" title="Send Ctrl+C">Ctrl+C</button>
-					<button id="terminalClear" class="logs-btn" type="button" title="Send Ctrl+L">Clear</button>
-					<button id="terminalRestart" class="logs-btn" type="button">Restart</button>
+					<div id="terminalSize" class="terminal-size" title="${t("terminal:sizeTitle")}">\u2014\u00d7\u2014</div>
+					<button id="terminalCtrlC" class="logs-btn" type="button" title="${t("terminal:ctrlCTitle")}">${t("terminal:ctrlC")}</button>
+					<button id="terminalClear" class="logs-btn" type="button" title="${t("terminal:clearTitle")}">${t("terminal:clear")}</button>
+					<button id="terminalRestart" class="logs-btn" type="button">${t("terminal:restart")}</button>
 				</div>
 			</div>
 			<div class="terminal-tabs-bar">
-				<div id="terminalTabs" class="terminal-tabs" aria-label="tmux windows"></div>
-				<button id="terminalNewTab" class="logs-btn terminal-new-tab" type="button" title="Create tmux window">+ Tab</button>
+				<div id="terminalTabs" class="terminal-tabs" aria-label="${t("terminal:tabsAriaLabel")}"></div>
+				<button id="terminalNewTab" class="logs-btn terminal-new-tab" type="button" title="${t("terminal:newTabTitle")}">${t("terminal:newTab")}</button>
 			</div>
 			<div class="terminal-output-wrap">
-				<div id="terminalOutput" class="terminal-output" aria-label="Host terminal output"></div>
+				<div id="terminalOutput" class="terminal-output" aria-label="${t("terminal:outputAriaLabel")}"></div>
 			</div>
 			<div id="terminalStatus" class="terminal-status"></div>
-			<div id="terminalHint" class="terminal-hint">Interactive host shell. Click inside terminal and type commands directly.</div>
+			<div id="terminalHint" class="terminal-hint">${t("terminal:defaultHint")}</div>
 			<div id="terminalHintActions" class="terminal-hint-actions" hidden>
 				<code id="terminalInstallCommand" class="terminal-hint-code"></code>
-				<button id="terminalInstallTmux" class="logs-btn terminal-hint-btn terminal-hint-btn-primary" type="button">Run install command</button>
-				<button id="terminalCopyInstall" class="logs-btn terminal-hint-btn" type="button">Copy</button>
+				<button id="terminalInstallTmux" class="logs-btn terminal-hint-btn terminal-hint-btn-primary" type="button">${t("terminal:runInstallCommand")}</button>
+				<button id="terminalCopyInstall" class="logs-btn terminal-hint-btn" type="button">${t("terminal:copy")}</button>
 			</div>
 		</div>
 	`;
@@ -951,7 +952,7 @@ export async function initTerminal(container) {
 	installTmuxBtn = container.querySelector("#terminalInstallTmux");
 	copyInstallBtn = container.querySelector("#terminalCopyInstall");
 
-	setStatus("Initializing terminal...");
+	setStatus(t("terminal:statusInitializing"));
 	setControlsEnabled(false);
 	renderWindowTabs();
 	bindEvents();
@@ -961,7 +962,7 @@ export async function initTerminal(container) {
 		await refreshTerminalWindows({ silent: true });
 		connectTerminalSocket();
 	} catch (err) {
-		setStatus(err.message || "Failed to initialize terminal", "error");
+		setStatus(err.message || t("terminal:statusFailedInit"), "error");
 	}
 }
 
