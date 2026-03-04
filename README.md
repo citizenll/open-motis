@@ -4,7 +4,7 @@
 
 ## 项目定位
 
-- 上游来源：`https://github.com/moltis-org/moltis`
+- 上游来源：`moltis-org/moltis`（仅作代码来源说明）
 - 本仓库：`https://github.com/citizenll/open-motis`
 - 维护方向：
   - WebUI 深度汉化（设置页全链路）
@@ -35,6 +35,8 @@ cargo run --release
 ### 2) Docker 运行
 
 ```bash
+docker build -t open-motis:latest .
+
 docker run -d \
   --name open-motis \
   -p 13131:13131 \
@@ -42,10 +44,10 @@ docker run -d \
   -v open-motis-config:/home/moltis/.config/moltis \
   -v open-motis-data:/home/moltis/.moltis \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  ghcr.io/moltis-org/moltis:latest
+  open-motis:latest
 ```
 
-说明：当前仍可使用上游镜像先跑通能力，仓库与文档由 `open-motis` 独立维护。
+说明：镜像由本仓库源码本地构建，仓库与文档由 `open-motis` 独立维护。
 
 ## 本仓库和上游关系
 
