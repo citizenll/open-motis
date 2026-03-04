@@ -1,229 +1,67 @@
-<div align="center">
+# open-motis
 
-<a href="https://moltis.org"><img src="https://raw.githubusercontent.com/moltis-org/moltis/main/website/favicon.svg" alt="Moltis" width="64"></a>
+`open-motis` 是基于上游 `moltis-org/moltis` 的独立 fork 分支，目标是持续维护中文体验与本地可用性。
 
-# Moltis — A Rust-native claw you can trust
+## 项目定位
 
-One binary — sandboxed, secure, yours.
+- 上游来源：`https://github.com/moltis-org/moltis`
+- 本仓库：`https://github.com/citizenll/open-motis`
+- 维护方向：
+  - WebUI 深度汉化（设置页全链路）
+  - 多语言框架持续补全（当前重点：中文）
+  - 按需合并上游能力，但以本分支可用性为先
 
-[![CI](https://github.com/moltis-org/moltis/actions/workflows/ci.yml/badge.svg)](https://github.com/moltis-org/moltis/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/moltis-org/moltis/graph/badge.svg)](https://codecov.io/gh/moltis-org/moltis)
-[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json&style=flat&label=CodSpeed)](https://codspeed.io/moltis-org/moltis)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.91%2B-orange.svg)](https://www.rust-lang.org)
-[![Discord](https://img.shields.io/discord/1469505370169933837?color=5865F2&label=Discord&logo=discord&logoColor=white)](https://discord.gg/XnmrepsXp5)
+## 当前状态
 
-[Installation](#installation) • [Comparison](#comparison) • [Architecture](#architecture--crate-map) • [Security](#security) • [Features](#features) • [How It Works](#how-it-works) • [Contributing](CONTRIBUTING.md)
+- 已在上游新 i18n 架构基础上完成大规模中文补充
+- 支持浏览器语言自动选择（含中英文）
+- 支持在 WebUI 中切换语言
+- 设置页多个子模块已完成补漏（agents / heartbeat / security / channels / hooks / mcp / skills / terminal / sandboxes 等）
 
-</div>
+## 快速开始
 
----
-
-Moltis recently hit [the front page of Hacker News](https://news.ycombinator.com/item?id=46993587). Please [open an issue](https://github.com/moltis-org/moltis/issues) for any friction at all. I'm focused on making Moltis excellent.
-
-**Secure by design** — Your keys never leave your machine. Every command runs in a sandboxed container, never on your host.
-
-**Your hardware** — Runs on a Mac Mini, a Raspberry Pi, or any server you own. One Rust binary, no Node.js, no npm, no runtime.
-
-**Full-featured** — Voice, memory, scheduling, Telegram, Discord, browser automation, MCP servers — all built-in. No plugin marketplace to get supply-chain attacked through.
-
-**Auditable** — The agent loop + provider model fits in ~5K lines. The core (excluding the optional web UI) is ~196K lines across 46 modular crates you can audit independently, with 3,100+ tests and zero `unsafe` code\*.
-
-## Installation
+### 1) 源码运行
 
 ```bash
-# One-liner install script (macOS / Linux)
-curl -fsSL https://www.moltis.org/install.sh | sh
-
-# macOS / Linux via Homebrew
-brew install moltis-org/tap/moltis
-
-# Docker (multi-arch: amd64/arm64)
-docker pull ghcr.io/moltis-org/moltis:latest
-
-# Or build from source
-cargo install moltis --git https://github.com/moltis-org/moltis
-```
-
-## Comparison
-
-| | OpenClaw | PicoClaw | NanoClaw | ZeroClaw | **Moltis** |
-|---|---|---|---|---|---|
-| Language | TypeScript | Go | TypeScript | Rust | **Rust** |
-| Agent loop | ~430K LoC | Small | ~500 LoC | ~3.4K LoC | **~5K LoC** (`runner.rs` + `model.rs`) |
-| Full codebase | — | — | — | 1,000+ tests | **~124K LoC** (2,300+ tests) |
-| Runtime | Node.js + npm | Single binary | Node.js | Single binary (3.4 MB) | **Single binary (44 MB)** |
-| Sandbox | App-level | — | Docker | Docker | **Docker + Apple Container** |
-| Memory safety | GC | GC | GC | Ownership | **Ownership, zero `unsafe`\*** |
-| Auth | Basic | API keys | None | Token + OAuth | **Password + Passkey + API keys + Vault** |
-| Voice I/O | Plugin | — | — | — | **Built-in (15+ providers)** |
-| MCP | Yes | — | — | — | **Yes (stdio + HTTP/SSE)** |
-| Hooks | Yes (limited) | — | — | — | **15 event types** |
-| Skills | Yes (store) | Yes | Yes | Yes | **Yes (+ OpenClaw Store)** |
-| Memory/RAG | Plugin | — | Per-group | SQLite + FTS | **SQLite + FTS + vector** |
-
-\* `unsafe` is denied workspace-wide. The only exceptions are opt-in FFI wrappers behind the `local-embeddings` feature flag, not part of the core.
-
-> [Full comparison with benchmarks →](https://docs.moltis.org/comparison.html)
-
-## Architecture — Crate Map
-
-**Core** (always compiled):
-
-| Crate | LoC | Role |
-|-------|-----|------|
-| `moltis` (cli) | 4.0K | Entry point, CLI commands |
-| `moltis-agents` | 9.6K | Agent loop, streaming, prompt assembly |
-| `moltis-providers` | 17.6K | LLM provider implementations |
-| `moltis-gateway` | 36.1K | HTTP/WS server, RPC, auth |
-| `moltis-chat` | 11.5K | Chat engine, agent orchestration |
-| `moltis-tools` | 21.9K | Tool execution, sandbox |
-| `moltis-config` | 7.0K | Configuration, validation |
-| `moltis-sessions` | 3.8K | Session persistence |
-| `moltis-plugins` | 1.9K | Hook dispatch, plugin formats |
-| `moltis-service-traits` | 1.3K | Shared service interfaces |
-| `moltis-common` | 1.1K | Shared utilities |
-| `moltis-protocol` | 0.8K | Wire protocol types |
-
-**Optional** (feature-gated or additive):
-
-| Category | Crates | Combined LoC |
-|----------|--------|-------------|
-| Web UI | `moltis-web` | 4.5K |
-| GraphQL | `moltis-graphql` | 4.8K |
-| Voice | `moltis-voice` | 6.0K |
-| Memory | `moltis-memory`, `moltis-qmd` | 5.9K |
-| Channels | `moltis-telegram`, `moltis-whatsapp`, `moltis-discord`, `moltis-msteams`, `moltis-channels` | 14.9K |
-| Browser | `moltis-browser` | 5.1K |
-| Scheduling | `moltis-cron`, `moltis-caldav` | 5.2K |
-| Extensibility | `moltis-mcp`, `moltis-skills`, `moltis-wasm-tools` | 9.1K |
-| Auth & Security | `moltis-auth`, `moltis-oauth`, `moltis-onboarding`, `moltis-vault` | 6.6K |
-| Networking | `moltis-network-filter`, `moltis-tls`, `moltis-tailscale` | 3.5K |
-| Provider setup | `moltis-provider-setup` | 4.3K |
-| Import | `moltis-openclaw-import` | 7.6K |
-| Apple native | `moltis-swift-bridge` | 2.1K |
-| Metrics | `moltis-metrics` | 1.7K |
-| Other | `moltis-projects`, `moltis-media`, `moltis-routing`, `moltis-canvas`, `moltis-auto-reply`, `moltis-schema-export`, `moltis-benchmarks` | 2.5K |
-
-Use `--no-default-features --features lightweight` for constrained devices (Raspberry Pi, etc.).
-
-## Security
-
-- **Zero `unsafe` code\*** — denied workspace-wide; only opt-in FFI behind `local-embeddings` flag
-- **Sandboxed execution** — Docker + Apple Container, per-session isolation
-- **Secret handling** — `secrecy::Secret`, zeroed on drop, redacted from tool output
-- **Authentication** — password + passkey (WebAuthn), rate-limited, per-IP throttle
-- **SSRF protection** — DNS-resolved, blocks loopback/private/link-local
-- **Origin validation** — rejects cross-origin WebSocket upgrades
-- **Hook gating** — `BeforeToolCall` hooks can inspect/block any tool invocation
-
-See [Security Architecture](https://docs.moltis.org/security.html) for details.
-
-## Features
-
-- **AI Gateway** — Multi-provider LLM support (OpenAI Codex, GitHub Copilot, Local), streaming responses, agent loop with sub-agent delegation, parallel tool execution
-- **Communication** — Web UI, Telegram, Microsoft Teams, Discord, API access, voice I/O (8 TTS + 7 STT providers), mobile PWA with push notifications
-- **Memory & Context** — Per-agent memory workspaces, embeddings-powered long-term memory, hybrid vector + full-text search, session persistence with auto-compaction, project context
-- **Extensibility** — MCP servers (stdio + HTTP/SSE), skill system, 15 lifecycle hook events with circuit breaker, destructive command guard
-- **Security** — Encryption-at-rest vault (XChaCha20-Poly1305 + Argon2id), password + passkey + API key auth, sandbox isolation, SSRF/CSWSH protection
-- **Operations** — Cron scheduling, OpenTelemetry tracing, Prometheus metrics, cloud deploy (Fly.io, DigitalOcean), Tailscale integration
-
-## How It Works
-
-Moltis is a **local-first AI gateway** — a single Rust binary that sits
-between you and multiple LLM providers. Everything runs on your machine; no
-cloud relay required.
-
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│   Web UI    │  │  Telegram   │  │  Discord    │
-└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-       │                │                │
-       └────────┬───────┴────────┬───────┘
-                │   WebSocket    │
-                ▼                ▼
-        ┌─────────────────────────────────┐
-        │          Gateway Server         │
-        │   (Axum · HTTP · WS · Auth)     │
-        ├─────────────────────────────────┤
-        │        Chat Service             │
-        │  ┌───────────┐ ┌─────────────┐  │
-        │  │   Agent   │ │    Tool     │  │
-        │  │   Runner  │◄┤   Registry  │  │
-        │  └─────┬─────┘ └─────────────┘  │
-        │        │                        │
-        │  ┌─────▼─────────────────────┐  │
-        │  │    Provider Registry      │  │
-        │  │  Multiple providers       │  │
-        │  │  (Codex · Copilot · Local)│  │
-        │  └───────────────────────────┘  │
-        ├─────────────────────────────────┤
-        │  Sessions  │ Memory  │  Hooks   │
-        │  (JSONL)   │ (SQLite)│ (events) │
-        └─────────────────────────────────┘
-                       │
-               ┌───────▼───────┐
-               │    Sandbox    │
-               │ Docker/Apple  │
-               │  Container    │
-               └───────────────┘
-```
-
-See [Quickstart](https://docs.moltis.org/quickstart.html) for gateway startup, message flow, sessions, and memory details.
-
-## Getting Started
-
-### Build & Run
-
-```bash
-git clone https://github.com/moltis-org/moltis.git
-cd moltis
-cargo build --release
+git clone https://github.com/citizenll/open-motis.git
+cd open-motis
 cargo run --release
 ```
 
-Open `https://moltis.localhost:3000`. On first run, a setup code is printed to
-the terminal — enter it in the web UI to set your password or register a passkey.
+默认启动后访问：
 
-Optional flags: `--config-dir /path/to/config --data-dir /path/to/data`
+- `https://moltis.localhost:3000`（或终端输出中的实际地址）
 
-### Docker
+### 2) Docker 运行
 
 ```bash
-# Docker / OrbStack
 docker run -d \
-  --name moltis \
+  --name open-motis \
   -p 13131:13131 \
   -p 13132:13132 \
-  -p 1455:1455 \
-  -v moltis-config:/home/moltis/.config/moltis \
-  -v moltis-data:/home/moltis/.moltis \
+  -v open-motis-config:/home/moltis/.config/moltis \
+  -v open-motis-data:/home/moltis/.moltis \
   -v /var/run/docker.sock:/var/run/docker.sock \
   ghcr.io/moltis-org/moltis:latest
 ```
 
-Open `https://localhost:13131` and complete the setup. See [Docker docs](https://docs.moltis.org/docker.html) for Podman, OrbStack, TLS trust, and persistence details.
+说明：当前仍可使用上游镜像先跑通能力，仓库与文档由 `open-motis` 独立维护。
 
-### Cloud Deployment
+## 本仓库和上游关系
 
-| Provider | Deploy |
-|----------|--------|
-| DigitalOcean | [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/moltis-org/moltis/tree/main) |
+- 本仓库不会等待“汉化是否被上游合并”再迭代
+- 上游若不接收汉化改动，`open-motis` 会继续独立发布与维护
+- 若上游后续提供兼容改动，会按稳定性评估后择优同步
 
-**Fly.io** (CLI):
+## 贡献方式
 
-```bash
-fly launch --image ghcr.io/moltis-org/moltis:latest
-fly secrets set MOLTIS_PASSWORD="your-password"
-```
-
-All cloud configs use `--no-tls` because the provider handles TLS termination.
-See [Cloud Deploy docs](https://docs.moltis.org/cloud-deploy.html) for details.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=moltis-org/moltis&type=date&legend=top-left)](https://www.star-history.com/#moltis-org/moltis&type=date&legend=top-left)
+- 提交 issue：描述未汉化位置（最好附截图 + 页面路径）
+- 提交 PR：建议按模块拆分（例如 `settings/mcp`、`settings/terminal`）
+- 优先保证：
+  - key 完整性（en/zh/fr 不缺键）
+  - 页面显式 `t(...)` 覆盖（避免动态匹配漏翻）
+  - 不破坏上游原有功能逻辑
 
 ## License
 
-MIT
+继承上游协议，详见 `LICENSE`。
