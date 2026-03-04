@@ -9,6 +9,7 @@ export default {
 		general: "General",
 		identity: "Identity",
 		agents: "Agents",
+		nodes: "Nodes",
 		environment: "Environment",
 		memory: "Memory",
 		notifications: "Notifications",

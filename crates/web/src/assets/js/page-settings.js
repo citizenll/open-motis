@@ -21,6 +21,7 @@ import { initLogs, teardownLogs } from "./page-logs.js";
 import { initMcp, teardownMcp } from "./page-mcp.js";
 import { initMonitoring, teardownMonitoring } from "./page-metrics.js";
 import { initNetworkAudit, teardownNetworkAudit } from "./page-network-audit.js";
+import { initNodes, teardownNodes } from "./page-nodes.js";
 import { initProviders, teardownProviders } from "./page-providers.js";
 import { initSkills, teardownSkills } from "./page-skills.js";
 import { initTerminal, teardownTerminal } from "./page-terminal.js";
@@ -130,27 +131,52 @@ function fetchIdentity() {
 
 var sections = [
 	{ groupKey: "general" },
-	{ id: "identity", labelKey: "identity" },
-	{ id: "agents", labelKey: "agents", page: true },
-	{ id: "environment", labelKey: "environment" },
-	{ id: "memory", labelKey: "memory" },
-	{ id: "notifications", labelKey: "notifications" },
-	{ id: "crons", labelKey: "crons", page: true },
-	{ id: "heartbeat", labelKey: "heartbeat", page: true },
+	{ id: "identity", labelKey: "identity", icon: html`<span class="icon icon-person"></span>` },
+	{ id: "agents", labelKey: "agents", icon: html`<span class="icon icon-users"></span>`, page: true },
+	{ id: "nodes", labelKey: "nodes", icon: html`<span class="icon icon-nodes"></span>`, page: true },
+	{ id: "environment", labelKey: "environment", icon: html`<span class="icon icon-terminal"></span>` },
+	{ id: "memory", labelKey: "memory", icon: html`<span class="icon icon-database"></span>` },
+	{
+		id: "notifications",
+		labelKey: "notifications",
+		icon: html`<span class="icon icon-bell"></span>`,
+	},
+	{ id: "crons", labelKey: "crons", icon: html`<span class="icon icon-cron"></span>`, page: true },
+	{
+		id: "heartbeat",
+		labelKey: "heartbeat",
+		icon: html`<span class="icon icon-heart"></span>`,
+		page: true,
+	},
 	{ groupKey: "security" },
-	{ id: "security", labelKey: "authentication" },
-	{ id: "vault", labelKey: "encryption" },
-	{ id: "tailscale", labelKey: "tailscale" },
-	{ id: "network-audit", labelKey: "networkAudit", page: true },
-	{ id: "sandboxes", labelKey: "sandboxes", page: true },
+	{ id: "security", labelKey: "authentication", icon: html`<span class="icon icon-key"></span>` },
+	{ id: "vault", labelKey: "encryption", icon: html`<span class="icon icon-lock"></span>` },
+	{ id: "tailscale", labelKey: "tailscale", icon: html`<span class="icon icon-tailscale"></span>` },
+	{
+		id: "network-audit",
+		labelKey: "networkAudit",
+		icon: html`<span class="icon icon-shield-check"></span>`,
+		page: true,
+	},
+	{ id: "sandboxes", labelKey: "sandboxes", icon: html`<span class="icon icon-cube"></span>`, page: true },
 	{ groupKey: "integrations" },
-	{ id: "channels", labelKey: "channels", page: true },
-	{ id: "hooks", labelKey: "hooks", page: true },
-	{ id: "providers", labelKey: "llms", page: true },
-	{ id: "mcp", labelKey: "mcp", page: true },
-	{ id: "skills", labelKey: "skills", page: true },
-	{ id: "import", labelKey: "openClawImport" },
-	{ id: "voice", labelKey: "voice" },
+	{
+		id: "channels",
+		labelKey: "channels",
+		icon: html`<span class="icon icon-channels"></span>`,
+		page: true,
+	},
+	{ id: "hooks", labelKey: "hooks", icon: html`<span class="icon icon-wrench"></span>`, page: true },
+	{ id: "providers", labelKey: "llms", icon: html`<span class="icon icon-layers"></span>`, page: true },
+	{ id: "mcp", labelKey: "mcp", icon: html`<span class="icon icon-link"></span>`, page: true },
+	{
+		id: "skills",
+		labelKey: "skills",
+		icon: html`<span class="icon icon-sparkles"></span>`,
+		page: true,
+	},
+	{ id: "import", labelKey: "openClawImport", icon: html`<span class="icon icon-openclaw"></span>` },
+	{ id: "voice", labelKey: "voice", icon: html`<span class="icon icon-microphone"></span>` },
 	{ groupKey: "systems" },
 	{ id: "terminal", labelKey: "terminal", page: true },
 	{ id: "monitoring", labelKey: "monitoring", page: true },
@@ -207,6 +233,7 @@ function SettingsSidebar() {
 								navigate(settingsPath(s.id));
 							}}
 						>
+							${s.icon ? s.icon : null}
 							${t(`settings:nav.${s.labelKey}`)}
 						</button>`,
 			)}
@@ -3882,6 +3909,7 @@ var pageSectionHandlers = {
 	providers: { init: initProviders, teardown: teardownProviders },
 	channels: { init: initChannels, teardown: teardownChannels },
 	mcp: { init: initMcp, teardown: teardownMcp },
+	nodes: { init: initNodes, teardown: teardownNodes },
 	hooks: { init: initHooks, teardown: teardownHooks },
 	skills: { init: initSkills, teardown: teardownSkills },
 	agents: { init: initAgents, teardown: teardownAgents },

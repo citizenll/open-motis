@@ -9,6 +9,7 @@ export default {
 		general: "通用",
 		identity: "身份",
 		agents: "代理",
+		nodes: "节点",
 		environment: "环境变量",
 		memory: "记忆",
 		notifications: "通知",

@@ -23,6 +23,7 @@ pub(crate) struct SpaRoutes {
     identity: &'static str,
     config: &'static str,
     logs: &'static str,
+    nodes: &'static str,
     onboarding: &'static str,
     projects: &'static str,
     skills: &'static str,
@@ -39,6 +40,7 @@ pub(crate) static SPA_ROUTES: SpaRoutes = SpaRoutes {
     identity: "/settings/identity",
     config: "/settings/config",
     logs: "/settings/logs",
+    nodes: "/settings/nodes",
     onboarding: "/onboarding",
     projects: "/projects",
     skills: "/skills",
@@ -380,7 +382,10 @@ pub(crate) static PROCESS_STARTED_AT_MS: std::sync::LazyLock<u64> =
 pub(crate) const SHARE_IMAGE_URL: &str = "https://www.moltis.org/og-social.jpg?v=4";
 
 /// Default Shiki CDN URL when `server.shiki_cdn_url` is unset.
-const DEFAULT_SHIKI_CDN_URL: &str = "https://esm.sh/shiki@3.2.1/bundle/web";
+///
+/// Use the bundled esm.sh entrypoint to ensure submodule imports resolve
+/// correctly outside esm.sh origin.
+const DEFAULT_SHIKI_CDN_URL: &str = "https://esm.sh/shiki@3.2.1?bundle";
 
 #[derive(Clone, Copy)]
 pub(crate) enum SpaTemplate {
