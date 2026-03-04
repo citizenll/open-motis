@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Quickstart - Moltis Documentation</title>
+        <title>Service Management - Moltis Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -149,7 +149,7 @@
                         <a href="https://github.com/moltis-org/moltis" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/moltis-org/moltis/edit/main/docs/src/src/quickstart.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/moltis-org/moltis/edit/main/docs/src/src/service.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -183,131 +183,77 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
-<p>Get Moltis running in under 5 minutes.</p>
-<h2 id="1-install"><a class="header" href="#1-install">1. Install</a></h2>
-<pre><code class="language-bash">curl -fsSL https://www.moltis.org/install.sh | sh
+                        <h1 id="service-management"><a class="header" href="#service-management">Service Management</a></h1>
+<p>Moltis can be installed as an OS service so it starts automatically on boot
+and restarts after crashes.</p>
+<h2 id="install"><a class="header" href="#install">Install</a></h2>
+<pre><code class="language-bash">moltis service install
 </code></pre>
-<p>Or via Homebrew:</p>
-<pre><code class="language-bash">brew install moltis-org/tap/moltis
-</code></pre>
-<h2 id="2-start"><a class="header" href="#2-start">2. Start</a></h2>
-<pre><code class="language-bash">moltis
-</code></pre>
-<p>You’ll see output like:</p>
-<pre><code>🚀 Moltis gateway starting...
-🌐 Open http://localhost:13131 in your browser
-</code></pre>
-<h2 id="3-configure-a-provider"><a class="header" href="#3-configure-a-provider">3. Configure a Provider</a></h2>
-<p>You need an LLM provider configured to chat. The fastest options:</p>
-<h3 id="option-a-api-key-anthropic-openai-gemini-etc"><a class="header" href="#option-a-api-key-anthropic-openai-gemini-etc">Option A: API Key (Anthropic, OpenAI, Gemini, etc.)</a></h3>
-<ol>
-<li>Set an API key as an environment variable and restart Moltis:
-<pre><code class="language-bash">export ANTHROPIC_API_KEY="sk-ant-..."   # Anthropic
-export OPENAI_API_KEY="sk-..."          # OpenAI
-export GEMINI_API_KEY="..."             # Google Gemini
-</code></pre>
-</li>
-<li>Models appear automatically in the model picker.</li>
-</ol>
-<p>Or configure via the web UI: <strong>Settings</strong> → <strong>Providers</strong> → enter your API key.</p>
-<h3 id="option-b-oauth-codex--copilot"><a class="header" href="#option-b-oauth-codex--copilot">Option B: OAuth (Codex / Copilot)</a></h3>
-<ol>
-<li>In Moltis, go to <strong>Settings</strong> → <strong>Providers</strong></li>
-<li>Click <strong>OpenAI Codex</strong> or <strong>GitHub Copilot</strong> → <strong>Connect</strong></li>
-<li>Complete the OAuth flow</li>
-</ol>
-<h3 id="option-c-local-llm-offline"><a class="header" href="#option-c-local-llm-offline">Option C: Local LLM (Offline)</a></h3>
-<ol>
-<li>In Moltis, go to <strong>Settings</strong> → <strong>Providers</strong></li>
-<li>Click <strong>Local LLM</strong></li>
-<li>Choose a model and save</li>
-</ol>
-<p>See <a href="providers.html">Providers</a> for the full list of supported providers.</p>
-<h2 id="4-chat"><a class="header" href="#4-chat">4. Chat!</a></h2>
-<p>Go to the <strong>Chat</strong> tab and start a conversation:</p>
-<pre><code>You: Write a Python function to check if a number is prime
-
-Agent: Here's a Python function to check if a number is prime:
-
-def is_prime(n):
-    if n &lt; 2:
-        return False
-    for i in range(2, int(n ** 0.5) + 1):
-        if n % i == 0:
-            return False
-    return True
-</code></pre>
-<h2 id="whats-next"><a class="header" href="#whats-next">What’s Next?</a></h2>
-<h3 id="enable-tool-use"><a class="header" href="#enable-tool-use">Enable Tool Use</a></h3>
-<p>Moltis can execute code, browse the web, and more. Tools are enabled by default with sandbox protection.</p>
-<p>Try:</p>
-<pre><code>You: Create a hello.py file that prints "Hello, World!" and run it
-</code></pre>
-<h3 id="connect-telegram"><a class="header" href="#connect-telegram">Connect Telegram</a></h3>
-<p>Chat with your agent from anywhere:</p>
-<ol>
-<li>Create a bot via <a href="https://t.me/BotFather">@BotFather</a></li>
-<li>Copy the bot token</li>
-<li>In Moltis: <strong>Settings</strong> → <strong>Telegram</strong> → Enter token → <strong>Save</strong></li>
-<li>Message your bot!</li>
-</ol>
-<h3 id="connect-discord"><a class="header" href="#connect-discord">Connect Discord</a></h3>
-<ol>
-<li>Create a bot in the <a href="https://discord.com/developers/applications">Discord Developer Portal</a></li>
-<li>Enable <strong>Message Content Intent</strong> and copy the bot token</li>
-<li>In Moltis: <strong>Settings</strong> → <strong>Channels</strong> → <strong>Connect Discord</strong> → Enter token → <strong>Connect</strong></li>
-<li>Invite the bot to your server and @mention it!</li>
-</ol>
-<p>→ <a href="discord.html">Full Discord setup guide</a></p>
-<h3 id="add-mcp-servers"><a class="header" href="#add-mcp-servers">Add MCP Servers</a></h3>
-<p>Extend capabilities with <a href="mcp.html">MCP servers</a>:</p>
-<pre><code class="language-toml"># In moltis.toml
-[mcp]
-[mcp.servers.github]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-github"]
-env = { GITHUB_TOKEN = "ghp_..." }
-</code></pre>
-<h3 id="set-up-memory"><a class="header" href="#set-up-memory">Set Up Memory</a></h3>
-<p>Enable long-term memory for context across sessions:</p>
-<pre><code class="language-toml"># In moltis.toml
-[memory]
-provider = "openai"
-model = "text-embedding-3-small"
-</code></pre>
-<p>Add knowledge by placing Markdown files in <code>~/.moltis/memory/</code>.</p>
-<h2 id="useful-commands"><a class="header" href="#useful-commands">Useful Commands</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>Command</th><th>Description</th></tr></thead><tbody>
-<tr><td><code>/new</code></td><td>Start a new session</td></tr>
-<tr><td><code>/model &lt;name&gt;</code></td><td>Switch models</td></tr>
-<tr><td><code>/clear</code></td><td>Clear chat history</td></tr>
-<tr><td><code>/help</code></td><td>Show available commands</td></tr>
+<p>This creates a service definition and starts it immediately:</p>
+<div class="table-wrapper"><table><thead><tr><th>Platform</th><th>Service file</th><th>Init system</th></tr></thead><tbody>
+<tr><td>macOS</td><td><code>~/Library/LaunchAgents/org.moltis.gateway.plist</code></td><td>launchd (user agent)</td></tr>
+<tr><td>Linux</td><td><code>~/.config/systemd/user/moltis.service</code></td><td>systemd (user unit)</td></tr>
 </tbody></table>
 </div>
-<h2 id="file-locations"><a class="header" href="#file-locations">File Locations</a></h2>
-<div class="table-wrapper"><table><thead><tr><th>Path</th><th>Contents</th></tr></thead><tbody>
-<tr><td><code>~/.config/moltis/moltis.toml</code></td><td>Configuration</td></tr>
-<tr><td><code>~/.config/moltis/provider_keys.json</code></td><td>API keys</td></tr>
-<tr><td><code>~/.moltis/</code></td><td>Data (sessions, memory, logs)</td></tr>
-</tbody></table>
-</div>
-<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<p>Both configurations:</p>
 <ul>
-<li><strong>Documentation</strong>: <a href="https://docs.moltis.org">docs.moltis.org</a></li>
-<li><strong>GitHub Issues</strong>: <a href="https://github.com/moltis-org/moltis/issues">github.com/moltis-org/moltis/issues</a></li>
-<li><strong>Discussions</strong>: <a href="https://github.com/moltis-org/moltis/discussions">github.com/moltis-org/moltis/discussions</a></li>
+<li><strong>Start on boot</strong> (<code>RunAtLoad</code> / <code>WantedBy=default.target</code>)</li>
+<li><strong>Restart on failure</strong> with a 10-second cooldown</li>
+<li><strong>Log to</strong> <code>~/.moltis/moltis.log</code></li>
 </ul>
-
+<h3 id="options"><a class="header" href="#options">Options</a></h3>
+<p>You can pass <code>--bind</code>, <code>--port</code>, and <code>--log-level</code> to bake them into the
+service definition:</p>
+<pre><code class="language-bash">moltis service install --bind 0.0.0.0 --port 8080 --log-level debug
+</code></pre>
+<p>These flags are written into the service file. The service reads the rest of
+its configuration from <code>~/.moltis/moltis.toml</code> as usual.</p>
+<h2 id="manage"><a class="header" href="#manage">Manage</a></h2>
+<pre><code class="language-bash">moltis service status     # Show running/stopped/not-installed and PID
+moltis service stop       # Stop the service
+moltis service restart    # Restart the service
+moltis service logs       # Print the log file path
+</code></pre>
+<p>To tail the logs:</p>
+<pre><code class="language-bash">tail -f $(moltis service logs)
+</code></pre>
+<h2 id="uninstall"><a class="header" href="#uninstall">Uninstall</a></h2>
+<pre><code class="language-bash">moltis service uninstall
+</code></pre>
+<p>This stops the service, removes the service file, and cleans up.</p>
+<h2 id="cli-reference"><a class="header" href="#cli-reference">CLI Reference</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Command</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>moltis service install</code></td><td>Install and start the service</td></tr>
+<tr><td><code>moltis service uninstall</code></td><td>Stop and remove the service</td></tr>
+<tr><td><code>moltis service status</code></td><td>Show service status and PID</td></tr>
+<tr><td><code>moltis service stop</code></td><td>Stop the service</td></tr>
+<tr><td><code>moltis service restart</code></td><td>Restart the service</td></tr>
+<tr><td><code>moltis service logs</code></td><td>Print log file path</td></tr>
+</tbody></table>
+</div>
+<h2 id="how-it-differs-from-moltis-node-add"><a class="header" href="#how-it-differs-from-moltis-node-add">How It Differs from <code>moltis node add</code></a></h2>
+<p><code>moltis service install</code> manages the <strong>gateway</strong> — the main Moltis server
+that hosts the web UI, chat sessions, and API.</p>
+<p><code>moltis node add</code> registers a <strong>headless node</strong> — a client process on a
+remote machine that connects back to a gateway for command execution. See
+<a href="nodes.html">Multi-Node</a> for details.</p>
+<div class="table-wrapper"><table><thead><tr><th></th><th><code>moltis service</code></th><th><code>moltis node</code></th></tr></thead><tbody>
+<tr><td>What it runs</td><td>The gateway server</td><td>A node client</td></tr>
+<tr><td>Needs <code>--host</code>/<code>--token</code></td><td>No</td><td>Yes</td></tr>
+<tr><td>Config source</td><td><code>~/.moltis/moltis.toml</code></td><td><code>~/.moltis/node.json</code></td></tr>
+<tr><td>launchd label</td><td><code>org.moltis.gateway</code></td><td><code>org.moltis.node</code></td></tr>
+<tr><td>systemd unit</td><td><code>moltis.service</code></td><td><code>moltis-node.service</code></td></tr>
+</tbody></table>
+</div>
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="nodes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
 
-                            <a rel="next prefetch" href="installation.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="authentication.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
 
@@ -317,11 +263,11 @@ model = "text-embedding-3-small"
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="nodes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
 
-                    <a rel="next prefetch" href="installation.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="authentication.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
             </nav>

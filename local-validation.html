@@ -185,12 +185,12 @@
                     <main>
                         <h1 id="local-validation"><a class="header" href="#local-validation">Local Validation</a></h1>
 <p>Moltis provides a local validation script that runs the same checks as CI
-(format, lint, test, e2e) on your machine.</p>
+(format, lint, test, e2e), plus a native macOS app build check on macOS hosts.</p>
 <h2 id="why-this-exists"><a class="header" href="#why-this-exists">Why this exists</a></h2>
 <ul>
 <li>Faster feedback for Rust-heavy branches (no long runner queues for every push)</li>
 <li>Better parity with a developer’s local environment while iterating</li>
-<li>Clear visibility in the PR UI (<code>fmt</code>, <code>biome</code>, <code>zizmor</code>, <code>clippy</code>, <code>test</code>, <code>e2e</code>)</li>
+<li>Clear visibility in the PR UI (<code>fmt</code>, <code>biome</code>, <code>zizmor</code>, <code>clippy</code>, <code>test</code>, <code>macos-app</code>, <code>e2e</code>)</li>
 </ul>
 <h2 id="run-local-validation"><a class="header" href="#run-local-validation">Run local validation</a></h2>
 <p>Run all checks on your current checkout:</p>
@@ -208,6 +208,7 @@ statuses to GitHub:</p>
 <li><code>local/lockfile</code> — verifies <code>Cargo.lock</code> is in sync (<code>cargo fetch --locked</code>)</li>
 <li><code>local/lint</code></li>
 <li><code>local/test</code></li>
+<li><code>local/macos-app</code> — validates the native Swift macOS app build (<code>Darwin</code> only)</li>
 <li><code>local/e2e</code> — runs gateway UI Playwright coverage</li>
 </ul>
 <p>In PR mode, the PR workflow verifies these contexts and surfaces them as
@@ -224,6 +225,9 @@ non-CUDA test/coverage defaults for local runs.</li>
 not already available.</li>
 <li><code>zizmor</code> is advisory in local runs and does not block lint/test execution.</li>
 <li>Test output is suppressed unless tests fail.</li>
+<li><code>local/macos-app</code> runs only on macOS; on Linux it is marked skipped.</li>
+<li>Override or disable macOS app validation with:
+<code>LOCAL_VALIDATE_MACOS_APP_CMD</code> and <code>LOCAL_VALIDATE_SKIP_MACOS_APP=1</code>.</li>
 <li><code>local/e2e</code> auto-runs <code>npm ci</code> only when <code>crates/web/ui/node_modules</code>
 is missing, then runs <code>npm run e2e:install</code> and <code>npm run e2e</code>. Override with
 <code>LOCAL_VALIDATE_E2E_CMD</code>.</li>
