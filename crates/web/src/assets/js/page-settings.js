@@ -233,7 +233,6 @@ function SettingsSidebar() {
 								navigate(settingsPath(s.id));
 							}}
 						>
-							${s.icon ? s.icon : null}
 							${t(`settings:nav.${s.labelKey}`)}
 						</button>`,
 			)}
