@@ -305,6 +305,7 @@ export default {
 		sttTestFailed: "STT 测试失败",
 		micDenied: "麦克风权限被拒绝",
 		noMicFound: "未找到麦克风",
+		micInUse: "麦克风正被其他应用占用",
 		unavailableInBuild: "当前构建未启用语音设置。请启动启用 voice 功能的二进制以配置 STT/TTS 供应商。",
 	},
 

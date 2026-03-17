@@ -2671,6 +2671,22 @@ function VoiceSection() {
 		}
 	}
 
+	function humanizeMicError(err) {
+		if (err.name === "OverconstrainedError" || (err.message && /constraint/i.test(err.message))) {
+			return t("settings:voice.noMicFound");
+		}
+		if (err.name === "NotFoundError") {
+			return t("settings:voice.noMicFound");
+		}
+		if (err.name === "NotAllowedError") {
+			return t("settings:voice.micDenied");
+		}
+		if (err.name === "NotReadableError") {
+			return t("settings:voice.micInUse");
+		}
+		return err.message || t("settings:voice.sttTestFailed");
+	}
+
 	// Test a voice provider (TTS or STT)
 	async function testVoiceProvider(providerId, type) {
 		// If already recording for this provider, stop it
@@ -2799,13 +2815,7 @@ function VoiceSection() {
 					rerender();
 				};
 			} catch (err) {
-				if (err.name === "NotAllowedError") {
-					setVoiceErr(t("settings:voice.micDenied"));
-				} else if (err.name === "NotFoundError") {
-					setVoiceErr(t("settings:voice.noMicFound"));
-				} else {
-					setVoiceErr(err.message || t("settings:voice.sttTestFailed"));
-				}
+				setVoiceErr(humanizeMicError(err));
 				setVoiceTesting(null);
 			}
 		}

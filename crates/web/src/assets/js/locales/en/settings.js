@@ -315,6 +315,7 @@ export default {
 		sttTestFailed: "STT test failed",
 		micDenied: "Microphone permission denied",
 		noMicFound: "No microphone found",
+		micInUse: "Microphone is in use by another application.",
 		unavailableInBuild:
 			"Voice settings are unavailable in this build. Start a binary with the voice feature enabled to configure STT/TTS providers.",
 	},
